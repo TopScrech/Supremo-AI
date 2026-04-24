@@ -13,13 +13,22 @@ struct ModelsView: View {
             }
             .foregroundStyle(.foreground)
             
-            Section("Local Models") {
+            Section {
                 if appModel.modelFiles.isEmpty {
                     ContentUnavailableView("No Local Models", systemImage: "shippingbox", description: Text("Import a GGUF model or download one from the catalog"))
                 } else {
                     ForEach(appModel.modelFiles) {
                         ModelFileCard($0)
                     }
+                }
+            } header: {
+                HStack {
+                    Text("Local Models")
+                    
+                    Spacer()
+                    
+                    Text("Total: \(appModel.localModelsSizeDescription)")
+                        .secondary()
                 }
             }
         }

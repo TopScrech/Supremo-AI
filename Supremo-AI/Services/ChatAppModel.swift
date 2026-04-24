@@ -34,6 +34,15 @@ final class ChatAppModel {
         }
     }
     
+    var localModelsSizeDescription: String {
+        let totalBytes = modelFiles.reduce(0) { total, model in
+            guard let localURL = model.localURL else { return total }
+            return total + fileSize(for: localURL)
+        }
+        
+        return totalBytes.formatted(.byteCount(style: .file))
+    }
+    
     func load() {
         do {
             try store.ensureDirectories()

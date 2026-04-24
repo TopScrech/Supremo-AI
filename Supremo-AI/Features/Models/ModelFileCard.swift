@@ -57,8 +57,9 @@ struct ModelFileCard: View {
                         .foregroundStyle(.foreground)
                     }
                 } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
-                    Button("Continue Download", systemImage: "arrow.down", action: continueDownload)
-                        .buttonStyle(.borderedProminent)
+                    Button("Continue Download", action: continueDownload)
+                        .buttonStyle(.glassProminent)
+                        .padding(.top, 5)
                 }
             }
             
