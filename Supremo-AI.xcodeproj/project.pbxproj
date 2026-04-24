@@ -12,13 +12,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AI-Chats.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3AA4F242F9BCECF00BCE00A /* Supremo-AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Supremo-AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		F3AA4F262F9BCECF00BCE00A /* AI-Chats */ = {
+		F3AA4F262F9BCECF00BCE00A /* Supremo-AI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "AI-Chats";
+			path = "Supremo-AI";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +37,7 @@
 		F3AA4F1B2F9BCECF00BCE00A = {
 			isa = PBXGroup;
 			children = (
-				F3AA4F262F9BCECF00BCE00A /* AI-Chats */,
+				F3AA4F262F9BCECF00BCE00A /* Supremo-AI */,
 				F3AA4F252F9BCECF00BCE00A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		F3AA4F252F9BCECF00BCE00A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */,
+				F3AA4F242F9BCECF00BCE00A /* Supremo-AI.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F3AA4F232F9BCECF00BCE00A /* AI-Chats */ = {
+		F3AA4F232F9BCECF00BCE00A /* Supremo-AI */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F3AA4F2F2F9BCED000BCE00A /* Build configuration list for PBXNativeTarget "AI-Chats" */;
+			buildConfigurationList = F3AA4F2F2F9BCED000BCE00A /* Build configuration list for PBXNativeTarget "Supremo-AI" */;
 			buildPhases = (
 				F3AA4F202F9BCECF00BCE00A /* Sources */,
 				F3AA4F212F9BCECF00BCE00A /* Frameworks */,
@@ -64,15 +64,15 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				F3AA4F262F9BCECF00BCE00A /* AI-Chats */,
+				F3AA4F262F9BCECF00BCE00A /* Supremo-AI */,
 			);
-			name = "AI-Chats";
+			name = "Supremo-AI";
 			packageProductDependencies = (
 				F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */,
 				F3AA50BB2F9BD04C00BCE00A /* ScrechKit */,
 			);
 			productName = "AI-Chats";
-			productReference = F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */;
+			productReference = F3AA4F242F9BCECF00BCE00A /* Supremo-AI.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -90,7 +90,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F3AA4F1F2F9BCECF00BCE00A /* Build configuration list for PBXProject "AI-Chats" */;
+			buildConfigurationList = F3AA4F1F2F9BCECF00BCE00A /* Build configuration list for PBXProject "Supremo-AI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F3AA4F232F9BCECF00BCE00A /* AI-Chats */,
+				F3AA4F232F9BCECF00BCE00A /* Supremo-AI */,
 			);
 		};
 /* End PBXProject section */
@@ -130,7 +130,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		F3AA4F2D2F9BCED000BCE00A /* Debug configuration for PBXProject "AI-Chats" */ = {
+		F3AA4F2D2F9BCED000BCE00A /* Debug configuration for PBXProject "Supremo-AI" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -192,7 +192,7 @@
 			};
 			name = Debug;
 		};
-		F3AA4F2E2F9BCED000BCE00A /* Release configuration for PBXProject "AI-Chats" */ = {
+		F3AA4F2E2F9BCED000BCE00A /* Release configuration for PBXProject "Supremo-AI" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -246,7 +246,7 @@
 			};
 			name = Release;
 		};
-		F3AA4F302F9BCED000BCE00A /* Debug configuration for PBXNativeTarget "AI-Chats" */ = {
+		F3AA4F302F9BCED000BCE00A /* Debug configuration for PBXNativeTarget "Supremo-AI" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -269,7 +269,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "AI Chats";
+				INFOPLIST_KEY_CFBundleDisplayName = "Supremo AI";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -284,7 +284,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.AI-Chats";
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.Supremo-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -300,7 +300,7 @@
 			};
 			name = Debug;
 		};
-		F3AA4F312F9BCED000BCE00A /* Release configuration for PBXNativeTarget "AI-Chats" */ = {
+		F3AA4F312F9BCED000BCE00A /* Release configuration for PBXNativeTarget "Supremo-AI" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -323,7 +323,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "AI Chats";
+				INFOPLIST_KEY_CFBundleDisplayName = "Supremo AI";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -338,7 +338,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.AI-Chats";
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.Supremo-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -357,19 +357,19 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F3AA4F1F2F9BCECF00BCE00A /* Build configuration list for PBXProject "AI-Chats" */ = {
+		F3AA4F1F2F9BCECF00BCE00A /* Build configuration list for PBXProject "Supremo-AI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F3AA4F2D2F9BCED000BCE00A /* Debug configuration for PBXProject "AI-Chats" */,
-				F3AA4F2E2F9BCED000BCE00A /* Release configuration for PBXProject "AI-Chats" */,
+				F3AA4F2D2F9BCED000BCE00A /* Debug configuration for PBXProject "Supremo-AI" */,
+				F3AA4F2E2F9BCED000BCE00A /* Release configuration for PBXProject "Supremo-AI" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		F3AA4F2F2F9BCED000BCE00A /* Build configuration list for PBXNativeTarget "AI-Chats" */ = {
+		F3AA4F2F2F9BCED000BCE00A /* Build configuration list for PBXNativeTarget "Supremo-AI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F3AA4F302F9BCED000BCE00A /* Debug configuration for PBXNativeTarget "AI-Chats" */,
-				F3AA4F312F9BCED000BCE00A /* Release configuration for PBXNativeTarget "AI-Chats" */,
+				F3AA4F302F9BCED000BCE00A /* Debug configuration for PBXNativeTarget "Supremo-AI" */,
+				F3AA4F312F9BCED000BCE00A /* Release configuration for PBXNativeTarget "Supremo-AI" */,
 			);
 			defaultConfigurationName = Release;
 		};

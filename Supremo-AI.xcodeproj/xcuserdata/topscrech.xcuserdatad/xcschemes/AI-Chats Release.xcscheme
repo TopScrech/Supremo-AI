@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F3AA4F232F9BCECF00BCE00A"
-               BuildableName = "AI-Chats.app"
-               BlueprintName = "AI-Chats"
-               ReferencedContainer = "container:AI-Chats.xcodeproj">
+               BuildableName = "Supremo-AI.app"
+               BlueprintName = "Supremo-AI"
+               ReferencedContainer = "container:Supremo-AI.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,9 +46,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F3AA4F232F9BCECF00BCE00A"
-            BuildableName = "AI-Chats.app"
-            BlueprintName = "AI-Chats"
-            ReferencedContainer = "container:AI-Chats.xcodeproj">
+            BuildableName = "Supremo-AI.app"
+            BlueprintName = "Supremo-AI"
+            ReferencedContainer = "container:Supremo-AI.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -63,9 +63,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F3AA4F232F9BCECF00BCE00A"
-            BuildableName = "AI-Chats.app"
-            BlueprintName = "AI-Chats"
-            ReferencedContainer = "container:AI-Chats.xcodeproj">
+            BuildableName = "Supremo-AI.app"
+            BlueprintName = "Supremo-AI"
+            ReferencedContainer = "container:Supremo-AI.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
