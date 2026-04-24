@@ -5,6 +5,16 @@ struct ModelFileCard: View {
     
     private let model: ModelFile
     
+    private var sizeDescription: String {
+        guard model.isPartialDownload == true else {
+            return model.sizeDescription
+        }
+        
+        let downloadFileSuffix = ".download"
+        let completeFileName = model.fileName.hasSuffix(downloadFileSuffix) ? String(model.fileName.dropLast(downloadFileSuffix.count)) : model.fileName
+        return appModel.downloadStates[completeFileName]?.statusText ?? model.sizeDescription
+    }
+    
     init(_ model: ModelFile) {
         self.model = model
     }
@@ -16,7 +26,7 @@ struct ModelFileCard: View {
             
             HStack {
                 Label(model.quantization, systemImage: "tag")
-                Label(model.sizeDescription, systemImage: "internaldrive")
+                Label(sizeDescription, systemImage: "internaldrive")
                 
                 if model.isMultimodalProjector {
                     Label("Projector", systemImage: "photo")
