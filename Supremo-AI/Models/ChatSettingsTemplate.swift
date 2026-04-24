@@ -11,8 +11,8 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
     var topP: Double
     var useMetal: Bool
     var promptFormat: String
-
-    static let builtIns: [ChatSettingsTemplate] = [
+    
+    static let builtIns = [
         ChatSettingsTemplate(name: "Custom", inference: .llama, contextLength: 2048, batchSize: 512, temperature: 0.9, topK: 40, topP: 0.95, useMetal: true, promptFormat: "{prompt}"),
         ChatSettingsTemplate(name: "Llama 3 Instruct", inference: .llama, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"),
         ChatSettingsTemplate(name: "Gemma", inference: .gemma, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model"),
