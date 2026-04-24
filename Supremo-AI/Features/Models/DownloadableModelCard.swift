@@ -11,6 +11,9 @@ struct DownloadableModelCard: View {
     
     var body: some View {
         let downloadState = appModel.downloadStates[model.fileName]
+        let isDownloaded = appModel.modelFiles.contains {
+            $0.fileName == model.fileName && $0.isAvailableLocally
+        }
         
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .center) {
@@ -29,7 +32,15 @@ struct DownloadableModelCard: View {
                 
                 Spacer()
                 
-                if downloadState?.isDownloading != true {
+                if isDownloaded {
+                    SFButton("checkmark") {}
+                        .foregroundStyle(.green)
+                        .headline()
+                        .disabled(true)
+                        .buttonStyle(.glassProminent)
+                        .buttonBorderShape(.circle)
+                    
+                } else if downloadState?.isDownloading != true {
                     SFButton("arrow.down") {
                         Task {
                             await appModel.download(model)
