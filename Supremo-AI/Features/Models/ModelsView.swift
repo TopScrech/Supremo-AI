@@ -12,7 +12,7 @@ struct ModelsView: View {
                 showImporter = true
             } label: {
                 HStack {
-                    Text("Import GGUF Model")
+                    Text("Import from Files")
                     
                     Spacer()
                     

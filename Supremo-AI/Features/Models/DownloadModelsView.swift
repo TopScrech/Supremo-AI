@@ -5,9 +5,9 @@ struct DownloadModelsView: View {
     
     var body: some View {
         List {
-            Text("Download a featured GGUF model below. When the first model finishes, it is assigned to the current chat automatically")
+            Text("When the first model finishes, it is assigned to the current chat automatically")
             
-            Section("Featured GGUF Models") {
+            Section("Featured") {
                 ForEach(appModel.downloadableModels) {
                     DownloadableModelCard($0)
                 }
