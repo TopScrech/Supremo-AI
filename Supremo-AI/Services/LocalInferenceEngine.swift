@@ -1,5 +1,7 @@
 import Foundation
+import SwiftLlama
 import llmfarm_core
+import OSLog
 
 protocol LocalInferenceEngine {
     var isAvailable: Bool { get }
@@ -19,6 +21,8 @@ enum InferenceEngineError: LocalizedError {
 
 struct LLMFarmInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
+    private static let gemma4Store = Gemma4SwiftLlamaStore()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "LocalInferenceEngine")
     
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String {
         guard let modelURL = chat.modelFileURL else {
@@ -26,6 +30,10 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         }
         
         let input = promptWithRAG(prompt: prompt, context: context)
+        if usesSwiftLlama(for: chat, modelURL: modelURL) {
+            return try await swiftLlamaResponse(for: input, chat: chat, modelURL: modelURL)
+        }
+        
         let ai = AI(_modelPath: modelURL.path(), _chatName: chat.id.uuidString)
         let contextParams = makeContextParams(for: chat)
         let sampleParams = makeSampleParams(for: chat)
@@ -50,6 +58,71 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         )
         
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private func usesSwiftLlama(for chat: ChatConfiguration, modelURL: URL) -> Bool {
+        chat.settings.modelSettingsTemplate == "Gemma 4" || modelURL.lastPathComponent.localizedStandardContains("gemma-4")
+    }
+    
+    private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
+        let configuration = Configuration(
+            seed: 1234,
+            topK: chat.settings.sampling.topK,
+            topP: Float(chat.settings.sampling.topP),
+            nCTX: chat.settings.prediction.contextLength,
+            temperature: Float(chat.settings.sampling.temperature),
+            batchSize: chat.settings.prediction.batchSize,
+            useMetal: false,
+            maxTokenCount: chat.settings.prediction.maxTokens,
+            stopTokens: swiftLlamaStopTokens(for: chat)
+        )
+        let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
+        logger.info("Starting Gemma 4 response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        let rawOutput = try await Self.gemma4Store.response(
+            modelPath: modelURL.path(),
+            configuration: configuration,
+            prompt: formattedPrompt
+        )
+        logger.info("Finished Gemma 4 response. outputCharacters=\(rawOutput.count, privacy: .public)")
+        return cleanedSwiftLlamaOutput(rawOutput)
+    }
+    
+    private func formattedSwiftLlamaPrompt(_ prompt: String, chat: ChatConfiguration) -> String {
+        var formattedPrompt = chat.settings.prompt.promptFormat
+            .replacingOccurrences(of: "{{prompt}}", with: prompt)
+            .replacingOccurrences(of: "{prompt}", with: prompt)
+            .replacingOccurrences(of: "\\n", with: "\n")
+        
+        let systemPrompt = chat.settings.prompt.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !systemPrompt.isEmpty && formattedPrompt.hasPrefix("<|turn>user") {
+            formattedPrompt = "<|turn>system\n\(systemPrompt)<turn|>\n" + formattedPrompt
+        }
+        
+        return formattedPrompt
+    }
+    
+    private func swiftLlamaStopTokens(for chat: ChatConfiguration) -> [String] {
+        let customStopTokens = chat.settings.prompt.reversePrompt
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        
+        var stopTokens: [String] = []
+        for token in customStopTokens + ["<turn|>", "<|turn>user", "<|turn>system"] where !stopTokens.contains(token) {
+            stopTokens.append(token)
+        }
+        return stopTokens
+    }
+    
+    private func cleanedSwiftLlamaOutput(_ output: String) -> String {
+        var cleanedOutput = output
+        if let thoughtEnd = cleanedOutput.range(of: "<channel|>") {
+            cleanedOutput = String(cleanedOutput[thoughtEnd.upperBound...])
+        }
+        
+        return cleanedOutput
+            .replacingOccurrences(of: "<turn|>", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     private func promptWithRAG(prompt: String, context: [RAGDocument]) -> String {

@@ -23,6 +23,9 @@ let package = Package(
        .library(
            name: "llmfarm_core_cpp",
            targets: ["llmfarm_core_cpp"]),
+        .library(
+            name: "llama",
+            targets: ["llama"]),
 
     ],
     dependencies: [
