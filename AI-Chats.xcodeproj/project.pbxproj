@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AI-Chats.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "AI-Chats";
 			packageProductDependencies = (
+				F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */,
 			);
 			productName = "AI-Chats";
 			productReference = F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F3AA4F1B2F9BCECF00BCE00A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F3AA4F252F9BCECF00BCE00A /* Products */;
 			projectDirPath = "";
@@ -351,6 +360,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ThirdParty/llmfarm_core;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */;
+			productName = llmfarm_core;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F3AA4F1C2F9BCECF00BCE00A /* Project object */;
 }

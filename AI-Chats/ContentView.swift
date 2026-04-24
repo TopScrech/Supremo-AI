@@ -1,24 +1,19 @@
-//
-//  ContentView.swift
-//  AI-Chats
-//
-//  Created by Sergei Saliukov on 24/04/2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(ChatAppModel.self) private var appModel
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        AppShellView()
+            .task {
+                if appModel.chats.isEmpty {
+                    appModel.load()
+                }
+            }
     }
 }
 
 #Preview {
     ContentView()
+        .environment(ChatAppModel())
 }
