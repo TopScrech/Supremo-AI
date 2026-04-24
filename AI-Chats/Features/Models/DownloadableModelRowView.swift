@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct DownloadableModelRowView: View {
     @Environment(ChatAppModel.self) private var appModel
@@ -9,22 +9,22 @@ struct DownloadableModelRowView: View {
 
         VStack(alignment: .leading) {
             Text(model.familyName)
-                .font(.headline)
+                .headline()
             Text(model.fileName)
-                .foregroundStyle(.secondary)
+                .secondary()
             HStack {
                 Label(model.inference.label, systemImage: "cpu")
                 Label(model.quantization, systemImage: "tag")
                 Label(model.displaySize, systemImage: "externaldrive")
             }
-            .font(.caption)
+            .caption()
             .foregroundStyle(.tertiary)
 
             if let downloadState, downloadState.isDownloading {
                 ProgressView(value: downloadState.progress)
                 Text(downloadState.statusText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .caption()
+                    .secondary()
             } else {
                 HStack {
                     Button("Download", systemImage: "arrow.down.circle") {
@@ -36,7 +36,7 @@ struct DownloadableModelRowView: View {
 
                     if let downloadState, let errorMessage = downloadState.errorMessage {
                         Text(errorMessage)
-                            .font(.caption)
+                            .caption()
                             .foregroundStyle(.red)
                     }
                 }

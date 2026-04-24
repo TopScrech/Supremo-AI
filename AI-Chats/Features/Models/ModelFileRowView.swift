@@ -1,30 +1,39 @@
-import SwiftUI
+import ScrechKit
 
 struct ModelFileRowView: View {
     @Environment(ChatAppModel.self) private var appModel
-    let model: ModelFile
-
+    
+    private let model: ModelFile
+    
+    init(_ model: ModelFile) {
+        self.model = model
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text(model.displayName)
-                .font(.headline)
+                .headline()
+            
             Text(model.fileName)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .subheadline()
+                .secondary()
+            
             HStack {
                 Label(model.family.label, systemImage: "cpu")
                 Label(model.quantization, systemImage: "tag")
                 Label(model.sizeDescription, systemImage: "internaldrive")
+                
                 if model.isMultimodalProjector {
                     Label("Projector", systemImage: "photo")
                 }
+                
                 if model.isPartialDownload == true {
                     Label("Partial download", systemImage: "hourglass")
                 }
             }
-            .font(.caption)
+            .caption()
             .foregroundStyle(.tertiary)
-
+            
             if let chat = appModel.selectedChat {
                 HStack {
                     if model.isAvailableLocally {
@@ -33,12 +42,17 @@ struct ModelFileRowView: View {
                         }
                         .buttonStyle(.bordered)
                     }
-
+                    
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         appModel.deleteModel(model)
                     }
                     .buttonStyle(.bordered)
                 }
+            }
+        }
+        .swipeActions {
+            Button("Delete", systemImage: "trash", role: .destructive) {
+                appModel.deleteModel(model)
             }
         }
     }

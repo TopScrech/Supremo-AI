@@ -3,10 +3,10 @@ import SwiftUI
 struct ChatListView: View {
     @Environment(ChatAppModel.self) private var appModel
     @Binding var showSettings: Bool
-
+    
     var body: some View {
         @Bindable var appModel = appModel
-
+        
         List(selection: $appModel.selectedChatID) {
             ForEach(appModel.filteredChats) { chat in
                 ChatRowView(chat: chat)
@@ -20,6 +20,7 @@ struct ChatListView: View {
                         Button("Duplicate", systemImage: "plus.square.on.square") {
                             appModel.duplicateChat(chat)
                         }
+                        
                         Button("Delete", systemImage: "trash", role: .destructive) {
                             appModel.deleteChat(chat)
                         }

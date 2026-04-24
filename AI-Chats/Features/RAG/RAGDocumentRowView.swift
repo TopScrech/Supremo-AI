@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct RAGDocumentRowView: View {
     let document: RAGDocument
@@ -6,12 +6,12 @@ struct RAGDocumentRowView: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text(document.title)
-                .font(.headline)
+                .headline()
             Text(document.text)
                 .lineLimit(2)
-                .foregroundStyle(.secondary)
+                .secondary()
             Text(document.importedAt, format: .dateTime)
-                .font(.caption)
+                .caption()
                 .foregroundStyle(.tertiary)
         }
     }

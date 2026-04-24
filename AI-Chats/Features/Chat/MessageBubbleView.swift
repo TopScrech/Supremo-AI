@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct MessageBubbleView: View {
     let message: ChatMessage
@@ -12,11 +12,16 @@ struct MessageBubbleView: View {
 
             VStack(alignment: .leading) {
                 Text(message.role.label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(message.text)
-                    .textSelection(.enabled)
-                    .font(style == .compact ? .body : .callout)
+                    .caption()
+                    .secondary()
+                if style == .compact {
+                    Text(message.text)
+                        .textSelection(.enabled)
+                } else {
+                    Text(message.text)
+                        .textSelection(.enabled)
+                        .callout()
+                }
             }
             .padding()
             .background(backgroundStyle)

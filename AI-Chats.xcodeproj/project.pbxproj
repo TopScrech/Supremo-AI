@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */; };
+		F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA50BB2F9BD04C00BCE00A /* ScrechKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */,
+				F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 			name = "AI-Chats";
 			packageProductDependencies = (
 				F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */,
+				F3AA50BB2F9BD04C00BCE00A /* ScrechKit */,
 			);
 			productName = "AI-Chats";
 			productReference = F3AA4F242F9BCECF00BCE00A /* AI-Chats.app */;
@@ -98,6 +101,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */,
+				F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = F3AA4F252F9BCECF00BCE00A /* Products */;
@@ -378,11 +382,27 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TopScrech/ScrechKit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */;
 			productName = llmfarm_core;
+		};
+		F3AA50BB2F9BD04C00BCE00A /* ScrechKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */;
+			productName = ScrechKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

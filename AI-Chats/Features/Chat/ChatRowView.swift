@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct ChatRowView: View {
     let chat: ChatConfiguration
@@ -6,12 +6,14 @@ struct ChatRowView: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text(chat.title)
-                .font(.headline)
+                .headline()
+            
             Text(chat.modelName)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .subheadline()
+                .secondary()
+            
             Text(chat.updatedAt, format: .relative(presentation: .numeric))
-                .font(.caption)
+                .caption()
                 .foregroundStyle(.tertiary)
         }
     }

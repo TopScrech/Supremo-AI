@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct AdvancedSettingsSectionView: View {
     @Binding var chat: ChatConfiguration
@@ -6,8 +6,9 @@ struct AdvancedSettingsSectionView: View {
     var body: some View {
         Section("Advanced") {
             Text(chat.id.uuidString)
-                .font(.caption)
+                .caption()
                 .textSelection(.enabled)
+
             LabeledContent("Created", value: chat.createdAt, format: .dateTime)
             LabeledContent("Updated", value: chat.updatedAt, format: .dateTime)
         }
