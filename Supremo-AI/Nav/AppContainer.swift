@@ -1,7 +1,8 @@
 import SwiftUI
 
-struct AppShellView: View {
+struct AppContainer: View {
     @Environment(ChatAppModel.self) private var appModel
+
     @State private var selectedSettingsScreen = SettingsScreen.models
     @State private var showSettings = false
 
@@ -22,5 +23,15 @@ struct AppShellView: View {
                 SettingsHomeView(selectedScreen: $selectedSettingsScreen)
             }
         }
+        .task {
+            if appModel.chats.isEmpty {
+                appModel.load()
+            }
+        }
     }
+}
+
+#Preview {
+    AppContainer()
+        .environment(ChatAppModel())
 }
