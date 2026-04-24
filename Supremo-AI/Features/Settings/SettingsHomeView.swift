@@ -5,7 +5,7 @@ struct SettingsHomeView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            SettingsSectionPicker(selectedScreen: $selectedScreen)
+            SettingsSectionPicker($selectedScreen)
                 .padding()
             
             SettingsDetailView(screen: selectedScreen)
