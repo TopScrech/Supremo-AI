@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct ModelFileRowView: View {
+struct ModelFileCard: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let model: ModelFile

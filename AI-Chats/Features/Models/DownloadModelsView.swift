@@ -9,7 +9,7 @@ struct DownloadModelsView: View {
             
             Section("Featured GGUF Models") {
                 ForEach(appModel.downloadableModels) {
-                    DownloadableModelRowView($0)
+                    DownloadableModelCard($0)
                 }
             }
         }

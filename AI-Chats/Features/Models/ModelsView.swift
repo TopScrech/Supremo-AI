@@ -18,7 +18,7 @@ struct ModelsView: View {
                     ContentUnavailableView("No Local Models", systemImage: "shippingbox", description: Text("Import a GGUF model or download one from the catalog"))
                 } else {
                     ForEach(appModel.modelFiles) {
-                        ModelFileRowView($0)
+                        ModelFileCard($0)
                     }
                 }
             }

@@ -28,13 +28,21 @@ struct ChatListView: View {
             }
             .onDelete(perform: appModel.deleteChats)
         }
-        .searchable(text: $appModel.searchText, prompt: "Search chats")
         .navigationTitle("Chats")
         .toolbar {
-            ToolbarItemGroup {
+            ToolbarItem {
                 Button("Settings", systemImage: "gear") {
                     showSettings = true
                 }
+            }
+            
+            ToolbarItem(placement: .bottomBar) {
+                TextField("  Search chats", text: $appModel.searchText)
+            }
+            
+            ToolbarSpacer(.fixed, placement: .bottomBar)
+            
+            ToolbarItem(placement: .bottomBar) {
                 Button("New Chat", systemImage: "plus") {
                     appModel.createChat()
                 }

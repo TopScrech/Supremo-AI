@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct DownloadableModelRowView: View {
+struct DownloadableModelCard: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let model: DownloadableModel
@@ -30,12 +30,13 @@ struct DownloadableModelRowView: View {
                 Spacer()
                 
                 if downloadState?.isDownloading != true {
-                    SFButton("arrow.down.circle") {
+                    SFButton("arrow.down") {
                         Task {
                             await appModel.download(model)
                         }
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glassProminent)
+                    .buttonBorderShape(.circle)
                 }
             }
             
