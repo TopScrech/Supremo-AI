@@ -5,20 +5,11 @@ struct SettingsDetailView: View {
     
     var body: some View {
         switch screen {
-        case .models:
-            ModelsView()
-            
-        case .downloads:
-            DownloadModelsView()
-            
-        case .shortcuts:
-            ShortcutsInfoView()
-            
-        case .fineTune:
-            FineTuneView()
-            
-        case .about:
-            AboutView()
+        case .models: ModelsView()
+        case .downloads: DownloadModelsView()
+        case .shortcuts: ShortcutsInfoView()
+        case .fineTune: FineTuneView()
+        case .about: AboutView()
         }
     }
 }
