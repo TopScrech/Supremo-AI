@@ -6,7 +6,7 @@ struct NewDocumentView: View {
     @State private var title = ""
     @State private var text = ""
     let chat: ChatConfiguration
-
+    
     var body: some View {
         Form {
             Section("Document") {

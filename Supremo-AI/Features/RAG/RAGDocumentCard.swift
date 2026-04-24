@@ -1,8 +1,8 @@
 import ScrechKit
 
-struct RAGDocumentRowView: View {
+struct RAGDocumentCard: View {
     let document: RAGDocument
-
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text(document.title)

@@ -3,13 +3,13 @@ import ScrechKit
 struct MessageBubbleView: View {
     let message: ChatMessage
     let style: ChatStyle
-
+    
     var body: some View {
         HStack {
             if message.role == .user {
                 Spacer()
             }
-
+            
             VStack(alignment: .leading) {
                 Text(message.role.label)
                     .caption()
@@ -26,13 +26,13 @@ struct MessageBubbleView: View {
             .padding()
             .background(backgroundStyle)
             .clipShape(.rect(cornerRadius: 8))
-
+            
             if message.role != .user {
                 Spacer()
             }
         }
     }
-
+    
     private var backgroundStyle: some ShapeStyle {
         switch message.role {
         case .user: Color.blue.opacity(0.16)

@@ -3,7 +3,7 @@ import SwiftUI
 struct MissingInferenceBackendView: View {
     let chat: ChatConfiguration
     let installAction: () -> Void
-
+    
     var body: some View {
         ContentUnavailableView {
             Label("Inference Unavailable", systemImage: "cpu")

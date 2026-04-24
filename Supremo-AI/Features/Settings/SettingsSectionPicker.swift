@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsSectionPicker: View {
     @Binding var selectedScreen: SettingsScreen
-
+    
     var body: some View {
         ScrollView(.horizontal) {
             HStack {

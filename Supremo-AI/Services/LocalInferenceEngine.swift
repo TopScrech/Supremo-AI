@@ -8,7 +8,7 @@ protocol LocalInferenceEngine {
 
 enum InferenceEngineError: LocalizedError {
     case backendUnavailable
-
+    
     var errorDescription: String? {
         switch self {
         case .backendUnavailable:
@@ -19,26 +19,26 @@ enum InferenceEngineError: LocalizedError {
 
 struct LLMFarmInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
-
+    
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String {
         guard let modelURL = chat.modelFileURL else {
             throw InferenceEngineError.backendUnavailable
         }
-
+        
         let input = promptWithRAG(prompt: prompt, context: context)
         let ai = AI(_modelPath: modelURL.path(), _chatName: chat.id.uuidString)
         let contextParams = makeContextParams(for: chat)
         let sampleParams = makeSampleParams(for: chat)
-
+        
         ai.initModel(contextParams.model_inference, contextParams: contextParams)
         guard let model = ai.model else {
             throw InferenceEngineError.backendUnavailable
         }
-
+        
         model.sampleParams = sampleParams
         model.contextParams = contextParams
         try ai.loadModel_sync()
-
+        
         var output = ""
         _ = try model.Predict(
             input,
@@ -48,27 +48,27 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
             },
             system_prompt: chat.settings.prompt.systemPrompt.isEmpty ? nil : chat.settings.prompt.systemPrompt
         )
-
+        
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-
+    
     private func promptWithRAG(prompt: String, context: [RAGDocument]) -> String {
         guard !context.isEmpty else { return prompt }
-
+        
         let contextText = context
             .map { "\($0.title)\n\($0.text)" }
             .joined(separator: "\n\n")
-
+        
         return """
         Use the following context when it is relevant.
-
+        
         \(contextText)
-
+        
         User prompt:
         \(prompt)
         """
     }
-
+    
     private func makeContextParams(for chat: ChatConfiguration) -> ModelAndContextParams {
         var params = ModelAndContextParams.default
         params.model_inference = modelInference(for: chat)
@@ -94,7 +94,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         params.skip_tokens_str = chat.settings.prompt.skipTokens
         return params
     }
-
+    
     private func makeSampleParams(for chat: ChatConfiguration) -> ModelSampleParams {
         var params = ModelSampleParams.default
         params.n_batch = Int32(chat.settings.prediction.batchSize)
@@ -110,16 +110,16 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         params.mirostat = mirostatValue(for: chat.settings.sampling.method)
         return params
     }
-
+    
     private func modelInference(for chat: ChatConfiguration) -> ModelInference {
         switch chat.settings.inference {
         case .llava, .moondream:
-            .LLama_mm
+                .LLama_mm
         default:
-            .LLama_gguf
+                .LLama_gguf
         }
     }
-
+    
     private func mirostatValue(for method: SamplingMethod) -> Int32 {
         switch method {
         case .mirostat: 1

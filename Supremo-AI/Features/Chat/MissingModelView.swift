@@ -4,7 +4,7 @@ struct MissingModelView: View {
     let chat: ChatConfiguration
     let installAction: () -> Void
     let editAction: () -> Void
-
+    
     var body: some View {
         ContentUnavailableView {
             Label("No Model Selected", systemImage: "shippingbox")
@@ -14,7 +14,7 @@ struct MissingModelView: View {
             HStack {
                 Button("Install Model", systemImage: "arrow.down.circle", action: installAction)
                     .buttonStyle(.borderedProminent)
-
+                
                 Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
                     .buttonStyle(.bordered)
             }

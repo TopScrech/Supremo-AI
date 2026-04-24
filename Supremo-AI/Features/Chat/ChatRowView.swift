@@ -2,7 +2,7 @@ import ScrechKit
 
 struct ChatRowView: View {
     let chat: ChatConfiguration
-
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text(chat.title)

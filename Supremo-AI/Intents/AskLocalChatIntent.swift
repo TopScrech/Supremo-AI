@@ -5,10 +5,10 @@ struct AskLocalChatIntent: AppIntent {
     nonisolated static let title: LocalizedStringResource = "Ask Local LLM"
     nonisolated static let description = IntentDescription("Send a prompt to the default local chat")
     nonisolated static let openAppWhenRun = false
-
+    
     @Parameter(title: "Prompt")
     var prompt: String
-
+    
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
         let store = JSONFileStore()
@@ -17,7 +17,7 @@ struct AskLocalChatIntent: AppIntent {
         let text = previewResponse(prompt: prompt, chat: chat)
         return .result(value: text)
     }
-
+    
     private func previewResponse(prompt: String, chat: ChatConfiguration) -> String {
         [
             "Configured chat: \(chat.title)",

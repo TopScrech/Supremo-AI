@@ -13,12 +13,12 @@ struct ModelCatalog {
         model(familyName: "Bunny 1.0 4B", fileName: "Bunny-v1_0-4B-Q4_K_S.gguf", urlString: "https://huggingface.co/guinmoon/Bunny-v1_0-4B-GGUF/resolve/main/Bunny-v1_0-4B-Q4_K_S.gguf?download=true", quantization: "Q4_K_S", sizeDescription: "About 2.4 GB", sizeBytes: 2_400_000_000, inference: .llava),
         model(familyName: "Moondream 2", fileName: "moondream2-text-model-f16.gguf", urlString: "https://huggingface.co/vikhyatk/moondream2", quantization: "F16", sizeDescription: "Size varies", sizeBytes: nil, inference: .moondream)
     ]
-
+    
     private static func model(familyName: String, fileName: String, urlString: String, quantization: String, sizeDescription: String, sizeBytes: Int?, inference: InferenceKind) -> DownloadableModel {
         guard let url = URL(string: urlString) else {
             preconditionFailure("Invalid model URL")
         }
-
+        
         return DownloadableModel(familyName: familyName, fileName: fileName, url: url, quantization: quantization, sizeDescription: sizeDescription, sizeBytes: sizeBytes, inference: inference)
     }
 }

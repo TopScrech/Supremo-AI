@@ -11,6 +11,6 @@ struct ModelFile: Identifiable, Codable, Equatable {
     var sizeDescription: String
     var isMultimodalProjector = false
     var isPartialDownload: Bool?
-
+    
     var isAvailableLocally: Bool { localURL != nil && isPartialDownload != true }
 }

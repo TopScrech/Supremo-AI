@@ -9,7 +9,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     var sizeDescription: String
     var sizeBytes: Int?
     var inference: InferenceKind
-
+    
     var displaySize: String {
         if let sizeBytes {
             sizeBytes.formatted(.byteCount(style: .file))

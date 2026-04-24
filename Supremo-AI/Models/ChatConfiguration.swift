@@ -11,7 +11,7 @@ struct ChatConfiguration: Identifiable, Codable, Equatable {
     var createdAt = Date()
     var updatedAt = Date()
     var modelFileURL: URL?
-
+    
     static var sample: ChatConfiguration {
         ChatConfiguration(title: "Local Assistant", modelName: "No model selected")
     }

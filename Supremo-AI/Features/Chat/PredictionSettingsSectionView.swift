@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PredictionSettingsSectionView: View {
     @Binding var settings: PredictionSettings
-
+    
     var body: some View {
         Section("Prediction") {
             Stepper("Context \(settings.contextLength)", value: $settings.contextLength, in: 512...131072, step: 512)

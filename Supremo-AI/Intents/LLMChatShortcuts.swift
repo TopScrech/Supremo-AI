@@ -11,7 +11,7 @@ struct LLMChatShortcuts: AppShortcutsProvider {
             shortTitle: "Ask LLM",
             systemImageName: "bubble.left.and.text.bubble.right"
         )
-
+        
         AppShortcut(
             intent: SummarizeTextIntent(),
             phrases: [

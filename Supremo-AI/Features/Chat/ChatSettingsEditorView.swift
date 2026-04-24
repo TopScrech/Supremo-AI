@@ -24,7 +24,7 @@ struct ChatSettingsEditorView: View {
             Form {
                 switch section {
                 case .basic:
-                    BasicChatSettingsView(chat: $draft)
+                    BasicChatSettings(chat: $draft)
                     
                 case .model:
                     ModelSettingsSectionView(chat: $draft)
@@ -39,13 +39,13 @@ struct ChatSettingsEditorView: View {
                     SamplingSettingsSectionView(settings: $draft.settings.sampling)
                     
                 case .rag:
-                    RagSettingsSectionView(settings: $draft.settings.rag)
+                    RagSettingsSection(settings: $draft.settings.rag)
                     
                 case .documents:
                     DocumentsView(chat: draft)
                     
                 case .advanced:
-                    AdvancedSettingsSectionView(chat: $draft)
+                    AdvancedSettingsSection(chat: $draft)
                 }
             }
         }
