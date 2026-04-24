@@ -2,12 +2,13 @@ import SwiftUI
 
 struct ChatDetailView: View {
     @Environment(ChatAppModel.self) private var appModel
+    
     @State private var prompt = ""
     @State private var useRAG = false
     @State private var showSettings = false
     @State private var showModelInstall = false
     let chat: ChatConfiguration
-
+    
     var body: some View {
         VStack {
             if !appModel.isModelReady(for: chat) {
@@ -44,7 +45,7 @@ struct ChatDetailView: View {
                     }
                 }
             }
-
+            
             ChatInputBar(prompt: $prompt, useRAG: $useRAG, isGenerating: appModel.isGenerating, sendAction: sendPrompt)
                 .padding()
                 .disabled(!appModel.canRunChat(chat))
@@ -74,7 +75,7 @@ struct ChatDetailView: View {
             }
         }
     }
-
+    
     private func sendPrompt() {
         let text = prompt
         prompt = ""
