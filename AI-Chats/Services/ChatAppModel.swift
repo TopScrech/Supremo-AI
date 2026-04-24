@@ -250,14 +250,11 @@ final class ChatAppModel {
         
         do {
             logger.info("Downloading \(model.fileName, privacy: .public)")
-            downloadStates[model.fileName] = DownloadState(totalBytes: model.sizeBytes, isDownloading: true)
             try store.ensureDirectories()
+            let existingBytes = fileSize(for: partialDestination)
+            downloadStates[model.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: model.sizeBytes, isDownloading: true)
             
-            if FileManager.default.fileExists(atPath: partialDestination.path()) {
-                try FileManager.default.removeItem(at: partialDestination)
-            }
-            
-            FileManager.default.createFile(atPath: partialDestination.path(), contents: nil)
+            createPartialDownloadFileIfNeeded(at: partialDestination)
             refreshModelFilesFromDisk()
             try await downloadFile(from: model.url, to: partialDestination, modelFileName: model.fileName)
             
@@ -269,16 +266,26 @@ final class ChatAppModel {
             registerDownloadedModel(model, localURL: destination)
         } catch {
             refreshModelFilesFromDisk()
-            downloadStates[model.fileName] = DownloadState(isDownloading: false, errorMessage: error.localizedDescription)
+            downloadStates[model.fileName] = DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: model.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
     }
     
+    func continueDownload(_ model: ModelFile) async {
+        guard let downloadableModel = downloadableModel(forPartialDownload: model) else { return }
+        await download(downloadableModel)
+    }
+    
     private func downloadFile(from url: URL, to destination: URL, modelFileName: String) async throws {
-        let delegate = ModelDownloadDelegate(destination: destination) { [weak self] downloadedBytes, totalBytes in
-            Task { @MainActor in
-                self?.downloadStates[modelFileName]?.downloadedBytes = downloadedBytes
-                self?.downloadStates[modelFileName]?.totalBytes = totalBytes
+        let existingBytes = fileSize(for: destination)
+        var request = URLRequest(url: url)
+        if existingBytes > 0 {
+            request.setValue("bytes=\(existingBytes)-", forHTTPHeaderField: "Range")
+        }
+        
+        let delegate = ModelDataDownloadDelegate(destination: destination, existingBytes: existingBytes) { [weak self] downloadedBytes, totalBytes in
+            Task { @MainActor [weak self] in
+                self?.updateDownloadProgress(modelFileName: modelFileName, downloadedBytes: downloadedBytes, totalBytes: totalBytes)
             }
         }
         let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
@@ -286,7 +293,43 @@ final class ChatAppModel {
             session.invalidateAndCancel()
         }
         
-        try await delegate.download(from: url, using: session)
+        try await delegate.download(request, using: session)
+    }
+    
+    private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?) {
+        downloadStates[modelFileName]?.downloadedBytes = downloadedBytes
+        downloadStates[modelFileName]?.totalBytes = totalBytes
+    }
+    
+    private func downloadableModel(forPartialDownload model: ModelFile) -> DownloadableModel? {
+        let downloadFileSuffix = ".download"
+        let fileName = model.fileName.hasSuffix(downloadFileSuffix) ? String(model.fileName.dropLast(downloadFileSuffix.count)) : model.fileName
+        
+        if let catalogModel = downloadableModels.first(where: { $0.fileName == fileName }) {
+            return catalogModel
+        }
+        
+        guard let remoteURL = model.remoteURL else { return nil }
+        return DownloadableModel(
+            familyName: model.displayName,
+            fileName: fileName,
+            url: remoteURL,
+            quantization: model.quantization,
+            sizeDescription: model.sizeDescription,
+            sizeBytes: nil,
+            inference: model.family
+        )
+    }
+    
+    private func createPartialDownloadFileIfNeeded(at url: URL) {
+        guard !FileManager.default.fileExists(atPath: url.path()) else { return }
+        FileManager.default.createFile(atPath: url.path(), contents: nil)
+    }
+    
+    private func fileSize(for url: URL) -> Int {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path()),
+              let fileSize = attributes[.size] as? NSNumber else { return 0 }
+        return fileSize.intValue
     }
     
     func applyTemplate(_ template: ChatSettingsTemplate, to chat: ChatConfiguration) {
@@ -359,9 +402,9 @@ final class ChatAppModel {
     }
     
     private func fileSizeDescription(for url: URL) -> String {
-        let values = try? url.resourceValues(forKeys: [.fileSizeKey])
-        guard let fileSize = values?.fileSize else { return "Unknown size" }
-        return fileSize.formatted(.byteCount(style: .file))
+        let size = fileSize(for: url)
+        guard size > 0 else { return "0 bytes" }
+        return size.formatted(.byteCount(style: .file))
     }
     
     private func inferredInferenceKind(from fileName: String) -> InferenceKind {
@@ -387,49 +430,72 @@ final class ChatAppModel {
     }
 }
 
-private final class ModelDownloadDelegate: NSObject, URLSessionDownloadDelegate {
+private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate {
     private let destination: URL
+    private let existingBytes: Int
     private let progressHandler: @Sendable (Int, Int?) -> Void
     private var continuation: CheckedContinuation<Void, Error>?
-    private var didFinishDownloading = false
+    private var fileHandle: FileHandle?
+    private var downloadedBytes = 0
+    private var totalBytes: Int?
     
-    init(destination: URL, progressHandler: @escaping @Sendable (Int, Int?) -> Void) {
+    init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?) -> Void) {
         self.destination = destination
+        self.existingBytes = existingBytes
         self.progressHandler = progressHandler
     }
     
-    func download(from url: URL, using session: URLSession) async throws {
+    func download(_ request: URLRequest, using session: URLSession) async throws {
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
-            session.downloadTask(with: url).resume()
+            session.dataTask(with: request).resume()
         }
     }
     
     func urlSession(
         _ session: URLSession,
-        downloadTask: URLSessionDownloadTask,
-        didWriteData bytesWritten: Int64,
-        totalBytesWritten: Int64,
-        totalBytesExpectedToWrite: Int64
+        dataTask: URLSessionDataTask,
+        didReceive response: URLResponse,
+        completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
     ) {
-        let totalBytes = totalBytesExpectedToWrite > 0 ? Int(totalBytesExpectedToWrite) : nil
-        progressHandler(Int(totalBytesWritten), totalBytes)
+        do {
+            let effectiveExistingBytes = dataTask.responseSupportsPartialContent ? existingBytes : 0
+            if effectiveExistingBytes == 0 {
+                FileManager.default.createFile(atPath: destination.path(), contents: nil)
+            }
+            
+            let handle = try FileHandle(forWritingTo: destination)
+            if effectiveExistingBytes == 0 {
+                try handle.truncate(atOffset: 0)
+            } else {
+                try handle.seekToEnd()
+            }
+            fileHandle = handle
+            downloadedBytes = effectiveExistingBytes
+            
+            if response.expectedContentLength > 0 {
+                totalBytes = effectiveExistingBytes + Int(response.expectedContentLength)
+            }
+            progressHandler(downloadedBytes, totalBytes)
+            completionHandler(.allow)
+        } catch {
+            continuation?.resume(throwing: error)
+            continuation = nil
+            completionHandler(.cancel)
+        }
     }
     
     func urlSession(
         _ session: URLSession,
-        downloadTask: URLSessionDownloadTask,
-        didFinishDownloadingTo location: URL
+        dataTask: URLSessionDataTask,
+        didReceive data: Data
     ) {
         do {
-            if FileManager.default.fileExists(atPath: destination.path()) {
-                try FileManager.default.removeItem(at: destination)
-            }
-            try FileManager.default.moveItem(at: location, to: destination)
-            didFinishDownloading = true
-            continuation?.resume()
-            continuation = nil
+            try fileHandle?.write(contentsOf: data)
+            downloadedBytes += data.count
+            progressHandler(downloadedBytes, totalBytes)
         } catch {
+            dataTask.cancel()
             continuation?.resume(throwing: error)
             continuation = nil
         }
@@ -440,8 +506,21 @@ private final class ModelDownloadDelegate: NSObject, URLSessionDownloadDelegate 
         task: URLSessionTask,
         didCompleteWithError error: Error?
     ) {
-        guard let error, !didFinishDownloading else { return }
-        continuation?.resume(throwing: error)
+        try? fileHandle?.close()
+        fileHandle = nil
+        
+        if let error {
+            continuation?.resume(throwing: error)
+        } else {
+            continuation?.resume()
+        }
         continuation = nil
+    }
+}
+
+private extension URLSessionTask {
+    var responseSupportsPartialContent: Bool {
+        guard let httpResponse = response as? HTTPURLResponse else { return false }
+        return httpResponse.statusCode == 206
     }
 }

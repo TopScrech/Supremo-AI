@@ -10,9 +10,16 @@ struct ModelFileCard: View {
             return model.sizeDescription
         }
         
-        let downloadFileSuffix = ".download"
-        let completeFileName = model.fileName.hasSuffix(downloadFileSuffix) ? String(model.fileName.dropLast(downloadFileSuffix.count)) : model.fileName
         return appModel.downloadStates[completeFileName]?.statusText ?? model.sizeDescription
+    }
+    
+    private var completeFileName: String {
+        let downloadFileSuffix = ".download"
+        return model.fileName.hasSuffix(downloadFileSuffix) ? String(model.fileName.dropLast(downloadFileSuffix.count)) : model.fileName
+    }
+    
+    private var downloadState: DownloadState? {
+        appModel.downloadStates[completeFileName]
     }
     
     init(_ model: ModelFile) {
@@ -32,7 +39,7 @@ struct ModelFileCard: View {
                     Label("Projector", systemImage: "photo")
                 }
                 
-                if model.isPartialDownload == true {
+                if model.isPartialDownload == true, downloadState?.isDownloading != true {
                     Label("Partial download", systemImage: "hourglass")
                 }
             }
@@ -40,16 +47,23 @@ struct ModelFileCard: View {
             .caption()
             .foregroundStyle(.tertiary)
             
-            if let chat = appModel.selectedChat {
-                HStack {
-                    if model.isAvailableLocally {
+            HStack {
+                if model.isAvailableLocally {
+                    if let chat = appModel.selectedChat {
                         Button("Use for Current Chat") {
                             appModel.assignModel(model, to: chat)
                         }
                         .buttonStyle(.bordered)
                         .foregroundStyle(.foreground)
                     }
+                } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
+                    Button("Continue Download", systemImage: "arrow.down", action: continueDownload)
+                    .buttonStyle(.borderedProminent)
                 }
+            }
+            
+            if model.isPartialDownload == true, downloadState?.isDownloading == true {
+                ProgressView(value: downloadState?.progress)
             }
         }
         .swipeActions {
@@ -61,6 +75,12 @@ struct ModelFileCard: View {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 appModel.deleteModel(model)
             }
+        }
+    }
+    
+    private func continueDownload() {
+        Task {
+            await appModel.continueDownload(model)
         }
     }
 }
