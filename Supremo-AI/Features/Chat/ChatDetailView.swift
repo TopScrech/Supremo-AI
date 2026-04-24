@@ -16,8 +16,7 @@ struct ChatDetailView: View {
                     chat: chat,
                     installAction: {
                         showModelInstall = true
-                    },
-                    editAction: {
+                    }, editAction: {
                         showSettings = true
                     }
                 )
@@ -52,13 +51,21 @@ struct ChatDetailView: View {
         }
         .navigationTitle(chat.title)
         .toolbar {
+            ToolbarItem {
+                if !chat.messages.isEmpty {
+                    Button("Clear", systemImage: "eraser") {
+                        appModel.clearMessages(in: chat)
+                    }
+                }
+            }
+            
+            ToolbarSpacer()
+            
             ToolbarItemGroup {
                 Button("Install Model", systemImage: "arrow.down.circle") {
                     showModelInstall = true
                 }
-                Button("Clear", systemImage: "eraser") {
-                    appModel.clearMessages(in: chat)
-                }
+                
                 Button("Edit Chat", systemImage: "slider.horizontal.3") {
                     showSettings = true
                 }

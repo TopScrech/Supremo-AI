@@ -33,7 +33,9 @@ struct ModelFileCard: View {
             
             HStack {
                 Label(model.quantization, systemImage: "tag")
+                
                 Label(sizeDescription, systemImage: "internaldrive")
+                    .monospacedDigit()
                 
                 if model.isMultimodalProjector {
                     Label("Projector", systemImage: "photo")
