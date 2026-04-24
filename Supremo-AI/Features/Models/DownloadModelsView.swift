@@ -7,9 +7,11 @@ struct DownloadModelsView: View {
         List {
             Text("When the first model finishes, it is assigned to the current chat automatically")
             
-            Section("Featured") {
-                ForEach(appModel.downloadableModels) {
-                    DownloadableModelCard($0)
+            ForEach(appModel.downloadableModelFamilies) { family in
+                Section(family.name) {
+                    ForEach(family.models) {
+                        DownloadableModelCard($0)
+                    }
                 }
             }
         }

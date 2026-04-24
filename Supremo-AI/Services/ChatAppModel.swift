@@ -43,6 +43,20 @@ final class ChatAppModel {
         return totalBytes.formatted(.byteCount(style: .file))
     }
     
+    var downloadableModelFamilies: [DownloadableModelFamily] {
+        var families: [DownloadableModelFamily] = []
+        
+        for model in downloadableModels {
+            if let index = families.firstIndex(where: { $0.name == model.familyDisplayName }) {
+                families[index].models.append(model)
+            } else {
+                families.append(DownloadableModelFamily(name: model.familyDisplayName, models: [model]))
+            }
+        }
+        
+        return families
+    }
+    
     func load() {
         do {
             try store.ensureDirectories()

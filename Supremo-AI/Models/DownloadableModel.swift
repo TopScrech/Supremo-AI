@@ -17,4 +17,22 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
             sizeDescription
         }
     }
+    
+    var familyDisplayName: String {
+        let name = familyName.lowercased()
+        
+        if name.hasPrefix("gemma") {
+            return "Gemma"
+        } else if name.hasPrefix("phi") {
+            return "Phi"
+        } else if name.hasPrefix("bunny") {
+            return "Bunny"
+        } else if name.hasPrefix("llama") {
+            return "Llama"
+        } else if name.hasPrefix("moondream") {
+            return "Moondream"
+        } else {
+            return familyName
+        }
+    }
 }
