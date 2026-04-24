@@ -6,8 +6,6 @@ struct AboutView: View {
             Section("LLM Chat") {
                 LabeledContent("Inference families", value: InferenceKind.allCases.map(\.label).joined(separator: ", "))
                 LabeledContent("Sampling", value: SamplingMethod.allCases.map(\.label).joined(separator: ", "))
-                LabeledContent("Native backend", value: "llmfarm_core.swift")
-                LabeledContent("Storage", value: URL.documentsDirectory.appending(path: "LLMChat").path())
             }
             
             Section("Reference") {

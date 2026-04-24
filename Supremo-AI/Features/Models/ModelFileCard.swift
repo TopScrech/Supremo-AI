@@ -27,46 +27,46 @@ struct ModelFileCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(model.displayName)
-                .headline()
-            
-            HStack {
-                Label(model.quantization, systemImage: "tag")
+        HStack {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(model.displayName)
+                    .headline()
                 
-                Label(sizeDescription, systemImage: "internaldrive")
-                    .monospacedDigit()
-                
-                if model.isMultimodalProjector {
-                    Label("Projector", systemImage: "photo")
-                }
-                
-                if model.isPartialDownload == true, downloadState?.isDownloading != true {
-                    Label("Partial download", systemImage: "hourglass")
-                }
-            }
-            .labelIconToTitleSpacing(2)
-            .caption()
-            .foregroundStyle(.tertiary)
-            
-            HStack {
-                if model.isAvailableLocally {
-                    if let chat = appModel.selectedChat {
-                        Button("Use for Current Chat") {
-                            appModel.assignModel(model, to: chat)
-                        }
-                        .buttonStyle(.bordered)
-                        .foregroundStyle(.foreground)
+                HStack {
+                    if model.isPartialDownload != true {
+                        Label(model.quantization, systemImage: "tag")
                     }
-                } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
-                    Button("Continue Download", action: continueDownload)
-                        .buttonStyle(.glassProminent)
-                        .padding(.top, 5)
+                    
+                    Label(sizeDescription, systemImage: "internaldrive")
+                        .monospacedDigit()
+                    
+                    if model.isMultimodalProjector {
+                        Label("Projector", systemImage: "photo")
+                    }
+                }
+                .labelIconToTitleSpacing(2)
+                .caption()
+                .foregroundStyle(.tertiary)
+                
+                if model.isPartialDownload == true, downloadState?.isDownloading == true {
+                    ProgressView(value: downloadState?.progress)
                 }
             }
             
-            if model.isPartialDownload == true, downloadState?.isDownloading == true {
-                ProgressView(value: downloadState?.progress)
+            Spacer()
+            
+            if model.isAvailableLocally {
+                if let chat = appModel.selectedChat {
+                    Button("Select") {
+                        appModel.assignModel(model, to: chat)
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundStyle(.foreground)
+                }
+            } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
+                Button("Continue Download", action: continueDownload)
+                    .buttonStyle(.glassProminent)
+                    .padding(.top, 5)
             }
         }
         .swipeActions {

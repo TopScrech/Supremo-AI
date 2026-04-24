@@ -8,8 +8,17 @@ struct ModelsView: View {
     
     var body: some View {
         List {
-            Button("Import GGUF Model", systemImage: "square.and.arrow.down") {
+            Button {
                 showImporter = true
+            } label: {
+                HStack {
+                    Text("Import GGUF Model")
+                    
+                    Spacer()
+                    
+                    Image(systemName: "square.and.arrow.down")
+                        .secondary()
+                }
             }
             .foregroundStyle(.foreground)
             
