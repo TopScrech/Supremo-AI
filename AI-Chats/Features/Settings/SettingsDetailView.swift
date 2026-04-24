@@ -7,12 +7,16 @@ struct SettingsDetailView: View {
         switch screen {
         case .models:
             ModelsView()
+        
         case .downloads:
             DownloadModelsView()
+        
         case .shortcuts:
             ShortcutsInfoView()
+        
         case .fineTune:
             FineTuneView()
+            
         case .about:
             AboutView()
         }

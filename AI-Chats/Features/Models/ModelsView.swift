@@ -8,14 +8,10 @@ struct ModelsView: View {
     
     var body: some View {
         List {
-            Section("Install") {
-                Button("Import GGUF Model", systemImage: "square.and.arrow.down") {
-                    showImporter = true
-                }
-                
-                Text("Imported models are copied into the app documents folder and can be selected in each chat")
-                    .secondary()
+            Button("Import GGUF Model", systemImage: "square.and.arrow.down") {
+                showImporter = true
             }
+            .foregroundStyle(.foreground)
             
             Section("Local Models") {
                 if appModel.modelFiles.isEmpty {
@@ -28,11 +24,6 @@ struct ModelsView: View {
             }
         }
         .navigationTitle("Models")
-        .toolbar {
-            Button("Import GGUF", systemImage: "square.and.arrow.down") {
-                showImporter = true
-            }
-        }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
             if let url = try? result.get() {
                 appModel.importModel(from: url)

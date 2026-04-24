@@ -10,16 +10,11 @@ struct ModelFileRowView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(model.displayName)
                 .headline()
             
-            Text(model.fileName)
-                .subheadline()
-                .secondary()
-            
             HStack {
-                Label(model.family.label, systemImage: "cpu")
                 Label(model.quantization, systemImage: "tag")
                 Label(model.sizeDescription, systemImage: "internaldrive")
                 
@@ -31,26 +26,28 @@ struct ModelFileRowView: View {
                     Label("Partial download", systemImage: "hourglass")
                 }
             }
+            .labelIconToTitleSpacing(2)
             .caption()
             .foregroundStyle(.tertiary)
             
             if let chat = appModel.selectedChat {
                 HStack {
                     if model.isAvailableLocally {
-                        Button("Use for Current Chat", systemImage: "checkmark.circle") {
+                        Button("Use for Current Chat") {
                             appModel.assignModel(model, to: chat)
                         }
                         .buttonStyle(.bordered)
+                        .foregroundStyle(.foreground)
                     }
-                    
-                    Button("Delete", systemImage: "trash", role: .destructive) {
-                        appModel.deleteModel(model)
-                    }
-                    .buttonStyle(.bordered)
                 }
             }
         }
         .swipeActions {
+            Button("Delete", systemImage: "trash", role: .destructive) {
+                appModel.deleteModel(model)
+            }
+        }
+        .contextMenu {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 appModel.deleteModel(model)
             }
