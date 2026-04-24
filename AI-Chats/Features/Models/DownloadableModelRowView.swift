@@ -13,16 +13,31 @@ struct DownloadableModelRowView: View {
         let downloadState = appModel.downloadStates[model.fileName]
         
         VStack(alignment: .leading, spacing: 5) {
-            Text(model.familyName)
-                .headline()
-            
-            HStack {
-                Label(model.quantization, systemImage: "tag")
-                Label(model.displaySize, systemImage: "externaldrive")
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(model.familyName)
+                        .headline()
+                    
+                    HStack {
+                        Label(model.quantization, systemImage: "tag")
+                        Label(model.displaySize, systemImage: "externaldrive")
+                    }
+                    .labelIconToTitleSpacing(2)
+                    .caption()
+                    .foregroundStyle(.tertiary)
+                }
+                
+                Spacer()
+                
+                if downloadState?.isDownloading != true {
+                    SFButton("arrow.down.circle") {
+                        Task {
+                            await appModel.download(model)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
-            .labelIconToTitleSpacing(2)
-            .caption()
-            .foregroundStyle(.tertiary)
             
             if let downloadState, downloadState.isDownloading {
                 ProgressView(value: downloadState.progress)
@@ -31,21 +46,11 @@ struct DownloadableModelRowView: View {
                     .caption()
                     .secondary()
                     .monospacedDigit()
-            } else {
-                HStack {
-                    Button("Download", systemImage: "arrow.down.circle") {
-                        Task {
-                            await appModel.download(model)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    if let downloadState, let errorMessage = downloadState.errorMessage {
-                        Text(errorMessage)
-                            .caption()
-                            .foregroundStyle(.red)
-                    }
-                }
+                
+            } else if let downloadState, let errorMessage = downloadState.errorMessage {
+                Text(errorMessage)
+                    .caption()
+                    .foregroundStyle(.red)
             }
         }
         .contextMenu {
