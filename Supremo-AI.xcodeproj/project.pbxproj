@@ -13,6 +13,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F397FB182F9C8958000EBB14 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		F3AA4F242F9BCECF00BCE00A /* Supremo-AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Supremo-AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -40,6 +41,7 @@
 			isa = PBXGroup;
 			children = (
 				F3AA4F262F9BCECF00BCE00A /* Supremo-AI */,
+				F397FB182F9C8958000EBB14 /* LICENSE.txt */,
 				F3AA4F252F9BCECF00BCE00A /* Products */,
 			);
 			sourceTree = "<group>";
