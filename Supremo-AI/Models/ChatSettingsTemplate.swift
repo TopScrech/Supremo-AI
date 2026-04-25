@@ -39,31 +39,41 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
     
     static func automaticTemplate(for model: ModelFile) -> ChatSettingsTemplate? {
         let modelName = model.displayName
+        
         if modelName.localizedStandardContains("gemma 4") || modelName.localizedStandardContains("gemma-4") {
             return builtIns.first { $0.name == "Gemma 4" }
         }
+        
         if modelName.localizedStandardContains("gemma 3") || modelName.localizedStandardContains("gemma-3") {
             return builtIns.first { $0.name == "Gemma 3" }
         }
+        
         if modelName.localizedStandardContains("gemma 2") || modelName.localizedStandardContains("gemma v2") || modelName.localizedStandardContains("gemma_2b") {
             return builtIns.first { $0.name == "Gemma 2" }
         }
+        
         if modelName.localizedStandardContains("phi") {
             return builtIns.first { $0.name == "Phi" }
         }
+        
         if modelName.localizedStandardContains("qwen") {
             return builtIns.first { $0.name == "Qwen" }
         }
+        
         if modelName.localizedStandardContains("bunny") {
             return builtIns.first { $0.name == "Bunny" }
         }
+        
         if modelName.localizedStandardContains("moondream") {
             return builtIns.first { $0.name == "Moondream 2" }
         }
+        
         if modelName.localizedStandardContains("llama") {
             return builtIns.first { $0.name == "Llama 3 Instruct" }
         }
         
-        return builtIns.first { $0.inference == model.family && $0.name != "Custom" }
+        return builtIns.first {
+            $0.inference == model.family && $0.name != "Custom"
+        }
     }
 }
