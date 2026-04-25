@@ -5,5 +5,7 @@ enum ChatStyle: String, Codable, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
-    var label: String { rawValue.capitalized }
+    var label: String {
+        rawValue.capitalized
+    }
 }
