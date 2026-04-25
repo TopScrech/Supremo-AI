@@ -9,6 +9,8 @@ final class ChatAppModel {
     var modelFiles: [ModelFile] = []
     var downloadableModels = ModelCatalog.featured
     var downloadStates: [String: DownloadState] = [:]
+    var modelInitializationStates: [UUID: ModelInitializationState] = [:]
+    var modelInitializationMessages: [UUID: String] = [:]
     var isGenerating = false
     var searchText = ""
     
@@ -112,10 +114,15 @@ final class ChatAppModel {
     
     func updateChat(_ chat: ChatConfiguration) {
         guard let index = chats.firstIndex(where: { $0.id == chat.id }) else { return }
+        let existingChat = chats[index]
         var updated = chat
         updated.updatedAt = Date()
         chats[index] = updated
         selectedChatID = updated.id
+        if existingChat.modelFileID != updated.modelFileID || existingChat.settings != updated.settings {
+            modelInitializationStates[updated.id] = .idle
+            modelInitializationMessages[updated.id] = nil
+        }
         persistStatus()
     }
     
@@ -125,7 +132,46 @@ final class ChatAppModel {
     }
     
     func canRunChat(_ chat: ChatConfiguration) -> Bool {
-        isModelReady(for: chat) && isInferenceBackendAvailable
+        isModelReady(for: chat) && isInferenceBackendAvailable && isModelInitialized(for: chat)
+    }
+    
+    func isModelInitialized(for chat: ChatConfiguration) -> Bool {
+        modelInitializationStates[chat.id] == .ready
+    }
+    
+    func modelInitializationState(for chat: ChatConfiguration) -> ModelInitializationState {
+        modelInitializationStates[chat.id] ?? .idle
+    }
+    
+    func initializeModel(for chat: ChatConfiguration) async {
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chat.id }) else { return }
+        guard isModelReady(for: chats[chatIndex]), isInferenceBackendAvailable else { return }
+        
+        modelInitializationStates[chat.id] = .initializing
+        modelInitializationMessages[chat.id] = nil
+        
+        var initializationChat = chats[chatIndex]
+        initializationChat.modelFileURL = modelFiles.first { $0.id == initializationChat.modelFileID }?.localURL
+        
+        do {
+            try await inferenceEngine.prepare(chat: initializationChat)
+            modelInitializationStates[chat.id] = .ready
+            modelInitializationMessages[chat.id] = nil
+            logger.info("Initialized model \(initializationChat.modelName, privacy: .public)")
+        } catch {
+            modelInitializationStates[chat.id] = .failed
+            modelInitializationMessages[chat.id] = error.localizedDescription
+            logger.error("\(error.localizedDescription, privacy: .public)")
+        }
+    }
+    
+    func ejectModel(for chat: ChatConfiguration) async {
+        var ejectionChat = chat
+        ejectionChat.modelFileURL = modelFiles.first { $0.id == chat.modelFileID }?.localURL
+        await inferenceEngine.eject(chat: ejectionChat)
+        modelInitializationStates[chat.id] = .idle
+        modelInitializationMessages[chat.id] = nil
+        logger.info("Ejected model \(chat.modelName, privacy: .public)")
     }
     
     func assignModel(_ model: ModelFile, to chat: ChatConfiguration) {
@@ -138,6 +184,8 @@ final class ChatAppModel {
         updated.modelFileID = model.id
         updated.modelName = model.displayName
         updated.settings.inference = model.family
+        modelInitializationStates[chat.id] = .idle
+        modelInitializationMessages[chat.id] = nil
         updateChat(updated)
     }
     

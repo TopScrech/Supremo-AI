@@ -24,6 +24,19 @@ struct ChatDetailView: View {
                 MissingInferenceBackendView(chat: chat) {
                     showModelInstall = true
                 }
+            } else if !appModel.isModelInitialized(for: chat) {
+                ModelInitializationView(
+                    chat: chat,
+                    state: appModel.modelInitializationState(for: chat),
+                    message: appModel.modelInitializationMessages[chat.id],
+                    initializeAction: initializeModel,
+                    ejectAction: {
+                        ejectModel()
+                    },
+                    editAction: {
+                        showSettings = true
+                    }
+                )
             } else if chat.messages.isEmpty {
                 ContentUnavailableView("Start a Conversation", systemImage: "text.bubble", description: Text(chat.modelName))
             } else {
@@ -62,6 +75,12 @@ struct ChatDetailView: View {
             ToolbarSpacer()
             
             ToolbarItemGroup {
+                if appModel.isModelInitialized(for: chat) {
+                    Button("Eject Model", systemImage: "eject") {
+                        ejectModel()
+                    }
+                }
+                
                 Button("Install Model", systemImage: "arrow.down.circle") {
                     showModelInstall = true
                 }
@@ -88,6 +107,18 @@ struct ChatDetailView: View {
         prompt = ""
         Task {
             await appModel.sendPrompt(text, useRAG: useRAG)
+        }
+    }
+    
+    private func initializeModel() {
+        Task {
+            await appModel.initializeModel(for: chat)
+        }
+    }
+    
+    private func ejectModel() {
+        Task {
+            await appModel.ejectModel(for: chat)
         }
     }
 }

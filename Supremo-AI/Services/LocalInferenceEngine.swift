@@ -5,6 +5,8 @@ import OSLog
 
 protocol LocalInferenceEngine {
     var isAvailable: Bool { get }
+    func prepare(chat: ChatConfiguration) async throws
+    func eject(chat: ChatConfiguration) async
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String
 }
 
@@ -23,6 +25,33 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
     private static let gemma4Store = Gemma4SwiftLlamaStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "LocalInferenceEngine")
+    
+    func prepare(chat: ChatConfiguration) async throws {
+        guard let modelURL = chat.modelFileURL else {
+            throw InferenceEngineError.backendUnavailable
+        }
+        
+        if usesSwiftLlama(for: chat, modelURL: modelURL) {
+            try await Self.gemma4Store.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
+            return
+        }
+        
+        let ai = AI(_modelPath: modelURL.path(), _chatName: chat.id.uuidString)
+        let contextParams = makeContextParams(for: chat)
+        ai.initModel(contextParams.model_inference, contextParams: contextParams)
+        guard ai.model != nil else {
+            throw InferenceEngineError.backendUnavailable
+        }
+        try ai.loadModel_sync()
+    }
+    
+    func eject(chat: ChatConfiguration) async {
+        guard let modelURL = chat.modelFileURL else { return }
+        
+        if usesSwiftLlama(for: chat, modelURL: modelURL) {
+            await Self.gemma4Store.eject(modelPath: modelURL.path())
+        }
+    }
     
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String {
         guard let modelURL = chat.modelFileURL else {
@@ -65,7 +94,20 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     }
     
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
-        let configuration = Configuration(
+        let configuration = swiftLlamaConfiguration(for: chat)
+        let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
+        logger.info("Starting Gemma 4 response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        let rawOutput = try await Self.gemma4Store.response(
+            modelPath: modelURL.path(),
+            configuration: configuration,
+            prompt: formattedPrompt
+        )
+        logger.info("Finished Gemma 4 response. outputCharacters=\(rawOutput.count, privacy: .public)")
+        return cleanedSwiftLlamaOutput(rawOutput)
+    }
+    
+    private func swiftLlamaConfiguration(for chat: ChatConfiguration) -> Configuration {
+        Configuration(
             seed: 1234,
             topK: chat.settings.sampling.topK,
             topP: Float(chat.settings.sampling.topP),
@@ -76,15 +118,6 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
             maxTokenCount: chat.settings.prediction.maxTokens,
             stopTokens: swiftLlamaStopTokens(for: chat)
         )
-        let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
-        logger.info("Starting Gemma 4 response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
-        let rawOutput = try await Self.gemma4Store.response(
-            modelPath: modelURL.path(),
-            configuration: configuration,
-            prompt: formattedPrompt
-        )
-        logger.info("Finished Gemma 4 response. outputCharacters=\(rawOutput.count, privacy: .public)")
-        return cleanedSwiftLlamaOutput(rawOutput)
     }
     
     private func formattedSwiftLlamaPrompt(_ prompt: String, chat: ChatConfiguration) -> String {
