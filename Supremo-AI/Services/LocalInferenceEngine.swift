@@ -92,7 +92,9 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     private func usesSwiftLlama(for chat: ChatConfiguration, modelURL: URL) -> Bool {
         let fileName = modelURL.lastPathComponent
         return chat.settings.inference == .gemma
+            || chat.settings.inference == .phi
             || fileName.localizedStandardContains("gemma")
+            || fileName.localizedStandardContains("phi")
             || fileName.localizedStandardContains("llama-3.2")
             || fileName.localizedStandardContains("llama_3.2")
             || fileName.localizedStandardContains("llama 3.2")
