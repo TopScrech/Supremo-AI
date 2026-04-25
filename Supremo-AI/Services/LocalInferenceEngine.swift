@@ -23,7 +23,7 @@ enum InferenceEngineError: LocalizedError {
 
 struct LLMFarmInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
-    private static let gemmaStore = GemmaSwiftLlamaStore()
+    private static let swiftLlamaStore = SwiftLlamaModelStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "LocalInferenceEngine")
     
     func prepare(chat: ChatConfiguration) async throws {
@@ -32,7 +32,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         }
         
         if usesSwiftLlama(for: chat, modelURL: modelURL) {
-            try await Self.gemmaStore.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
+            try await Self.swiftLlamaStore.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
             return
         }
         
@@ -49,7 +49,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         guard let modelURL = chat.modelFileURL else { return }
         
         if usesSwiftLlama(for: chat, modelURL: modelURL) {
-            await Self.gemmaStore.eject(modelPath: modelURL.path())
+            await Self.swiftLlamaStore.eject(modelPath: modelURL.path())
         }
     }
     
@@ -90,19 +90,24 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     }
     
     private func usesSwiftLlama(for chat: ChatConfiguration, modelURL: URL) -> Bool {
-        chat.settings.inference == .gemma || modelURL.lastPathComponent.localizedStandardContains("gemma")
+        let fileName = modelURL.lastPathComponent
+        return chat.settings.inference == .gemma
+            || fileName.localizedStandardContains("gemma")
+            || fileName.localizedStandardContains("llama-3.2")
+            || fileName.localizedStandardContains("llama_3.2")
+            || fileName.localizedStandardContains("llama 3.2")
     }
     
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
-        logger.info("Starting Gemma response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
-        let rawOutput = try await Self.gemmaStore.response(
+        logger.info("Starting SwiftLlama response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        let rawOutput = try await Self.swiftLlamaStore.response(
             modelPath: modelURL.path(),
             configuration: configuration,
             prompt: formattedPrompt
         )
-        logger.info("Finished Gemma response. outputCharacters=\(rawOutput.count, privacy: .public)")
+        logger.info("Finished SwiftLlama response. outputCharacters=\(rawOutput.count, privacy: .public)")
         return cleanedSwiftLlamaOutput(rawOutput)
     }
     
