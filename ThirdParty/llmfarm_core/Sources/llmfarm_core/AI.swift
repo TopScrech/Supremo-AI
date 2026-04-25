@@ -77,8 +77,16 @@ public class AI {
 
     public func loadModel_sync() throws {
          do{
+            var loadError: Error?
             try ExceptionCather.catchException {
-               try? self.model?.load_model()
+               do {
+                  try self.model?.load_model()
+               } catch {
+                  loadError = error
+               }
+            }
+            if let loadError {
+               throw loadError
             }
         }
         catch{
@@ -541,4 +549,3 @@ public enum ModelPromptStyle {
 }
 
 public typealias ModelToken = Int32
-

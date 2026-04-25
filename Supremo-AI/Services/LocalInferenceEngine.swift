@@ -226,7 +226,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     
     private func modelInference(for chat: ChatConfiguration) -> ModelInference {
         switch chat.settings.inference {
-        case .llava, .moondream:
+        case .llava:
                 .LLama_mm
         default:
                 .LLama_gguf

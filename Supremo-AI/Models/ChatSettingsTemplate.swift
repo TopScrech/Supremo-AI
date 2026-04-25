@@ -30,7 +30,9 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
         ChatSettingsTemplate("Gemma 2", inference: .gemma, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model"),
         ChatSettingsTemplate("Gemma 3", inference: .gemma, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"),
         ChatSettingsTemplate("Gemma 4", inference: .gemma, contextLength: 4096, batchSize: 512, temperature: 1, topK: 64, topP: 0.95, useMetal: true, promptFormat: "<|turn>user\n{prompt}<turn|>\n<|turn>model\n<|channel>thought\n<channel|>"),
-        ChatSettingsTemplate("Phi", inference: .phi, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "<|user|>\n{prompt}<|end|>\n<|assistant|>")
+        ChatSettingsTemplate("Phi", inference: .phi, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "<|user|>\n{prompt}<|end|>\n<|assistant|>"),
+        ChatSettingsTemplate("Bunny", inference: .llava, contextLength: 4096, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\n{prompt} ASSISTANT:"),
+        ChatSettingsTemplate("Moondream 2", inference: .moondream, contextLength: 2048, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:")
         // ChatSettingsTemplate("ChatML", inference: .llama, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant")
     ]
 }
