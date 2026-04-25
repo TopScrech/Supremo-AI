@@ -16,7 +16,7 @@ final class ChatAppModel {
     
     private let store = JSONFileStore()
     private let ragIndexer = RAGIndexer()
-    private let inferenceEngine: LocalInferenceEngine = LLMFarmInferenceEngine()
+    private let inferenceEngine: LocalInferenceEngine = SwiftLlamaInferenceEngine()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "ChatAppModel")
     
     var isInferenceBackendAvailable: Bool {

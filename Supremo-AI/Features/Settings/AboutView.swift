@@ -9,12 +9,8 @@ struct AboutView: View {
             }
             
             Section("Reference") {
-                if let llmFarmURL = URL(string: "https://github.com/guinmoon/LLMFarm") {
-                    Link("LLMFarm", destination: llmFarmURL)
-                }
-                
-                if let coreURL = URL(string: "https://github.com/guinmoon/llmfarm_core.swift") {
-                    Link("llmfarm_core.swift", destination: coreURL)
+                if let swiftLlamaURL = URL(string: "https://github.com/ShenghaiWang/SwiftLlama") {
+                    Link("SwiftLlama", destination: swiftLlamaURL)
                 }
             }
         }

@@ -23,7 +23,7 @@ struct AskLocalChatIntent: AppIntent {
             "Configured chat: \(chat.title)",
             "Model: \(chat.modelName)",
             "Prompt: \(prompt)",
-            "Connect llmfarm_core.swift to run this shortcut with real offline inference"
+            "Connect SwiftLlama to run this shortcut with real offline inference"
         ].joined(separator: "\n\n")
     }
 }

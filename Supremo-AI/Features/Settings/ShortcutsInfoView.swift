@@ -11,7 +11,7 @@ struct ShortcutsInfoView: View {
             
             Section("Runtime") {
                 Text("Shortcut execution uses the same chat configuration, RAG documents, and model selection as the app")
-                Text("Text chat uses the native llmfarm_core.swift engine")
+                Text("Text chat uses the native SwiftLlama engine")
             }
         }
         .navigationTitle("Shortcuts")

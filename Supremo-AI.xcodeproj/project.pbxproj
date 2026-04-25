@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */; };
 		F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA50BB2F9BD04C00BCE00A /* ScrechKit */; };
 		F3AA60032FA0000000BCE00A /* SwiftLlama in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA60022FA0000000BCE00A /* SwiftLlama */; };
 /* End PBXBuildFile section */
@@ -29,7 +28,6 @@
 		F3AA4F212F9BCECF00BCE00A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				F3AA4E1B2F9CF00000BCE00A /* llmfarm_core in Frameworks */,
 				F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */,
 				F3AA60032FA0000000BCE00A /* SwiftLlama in Frameworks */,
 			);
@@ -72,7 +70,6 @@
 			);
 			name = "Supremo-AI";
 			packageProductDependencies = (
-				F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */,
 				F3AA50BB2F9BD04C00BCE00A /* ScrechKit */,
 				F3AA60022FA0000000BCE00A /* SwiftLlama */,
 			);
@@ -105,7 +102,6 @@
 			mainGroup = F3AA4F1B2F9BCECF00BCE00A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */,
 				F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */,
 				F3AA60012FA0000000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/SwiftLlama" */,
 			);
@@ -382,10 +378,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ThirdParty/llmfarm_core;
-		};
 		F3AA60012FA0000000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/SwiftLlama" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ThirdParty/SwiftLlama;
@@ -404,11 +396,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		F3AA4E1A2F9CF00000BCE00A /* llmfarm_core */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F3AA4E192F9CF00000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/llmfarm_core" */;
-			productName = llmfarm_core;
-		};
 		F3AA50BB2F9BD04C00BCE00A /* ScrechKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */;
