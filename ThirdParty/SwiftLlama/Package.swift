@@ -14,13 +14,15 @@ let package = Package(
     products: [
         .library(name: "SwiftLlama", targets: ["SwiftLlama"]),
     ],
-    dependencies: [
-        .package(path: "../llmfarm_core")
-    ],
+    dependencies: [],
     targets: [
+        .binaryTarget(
+            name: "llama",
+            path: "../llama/llama.xcframework"
+        ),
         .target(name: "SwiftLlama", 
                 dependencies: [
-                    .product(name: "llama", package: "llmfarm_core")
+                    "llama"
                 ]),
         .testTarget(name: "SwiftLlamaTests", dependencies: ["SwiftLlama"]),
     ]
