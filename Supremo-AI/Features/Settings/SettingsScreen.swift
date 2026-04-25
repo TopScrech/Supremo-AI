@@ -1,7 +1,7 @@
 import Foundation
 
 enum SettingsScreen: String, CaseIterable, Identifiable {
-    case models, downloads, shortcuts, fineTune, about
+    case models, downloads, shortcuts, fineTune
     
     var id: String { rawValue }
     
@@ -11,7 +11,6 @@ enum SettingsScreen: String, CaseIterable, Identifiable {
         case .downloads: "Downloads"
         case .shortcuts: "Shortcuts"
         case .fineTune: "Fine Tune"
-        case .about: "About"
         }
     }
     
@@ -21,7 +20,6 @@ enum SettingsScreen: String, CaseIterable, Identifiable {
         case .downloads: "arrow.down.circle"
         case .shortcuts: "sparkles"
         case .fineTune: "slider.horizontal.3"
-        case .about: "info.circle"
         }
     }
 }

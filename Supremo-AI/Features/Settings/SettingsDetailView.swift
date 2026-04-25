@@ -9,7 +9,6 @@ struct SettingsDetailView: View {
         case .downloads: DownloadableModelList()
         case .shortcuts: ShortcutsInfoView()
         case .fineTune: FineTuneView()
-        case .about: AboutView()
         }
     }
 }
