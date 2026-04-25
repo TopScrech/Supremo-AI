@@ -16,6 +16,8 @@ struct DownloadableModelCard: View {
             $0.fileName == model.fileName && $0.isAvailableLocally
         }
         
+        let storageErrorMessage = appModel.downloadStorageErrorMessage(for: model)
+        
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 5) {
@@ -47,6 +49,7 @@ struct DownloadableModelCard: View {
                             await appModel.download(model)
                         }
                     }
+                    .disabled(storageErrorMessage != nil)
                     .buttonStyle(.glassProminent)
                     .buttonBorderShape(.circle)
                 }
@@ -62,6 +65,11 @@ struct DownloadableModelCard: View {
                 
             } else if let downloadState, let errorMessage = downloadState.errorMessage {
                 Text(errorMessage)
+                    .caption()
+                    .foregroundStyle(.red)
+                
+            } else if let storageErrorMessage {
+                Text(storageErrorMessage)
                     .caption()
                     .foregroundStyle(.red)
             }

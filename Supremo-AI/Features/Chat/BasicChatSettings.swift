@@ -16,15 +16,7 @@ struct BasicChatSettings: View {
             }
             .onChange(of: chat.settings.modelSettingsTemplate) { _, newValue in
                 if let template = ChatSettingsTemplate.builtIns.first(where: { $0.name == newValue }) {
-                    chat.settings.modelSettingsTemplate = template.name
-                    chat.settings.inference = template.inference
-                    chat.settings.prediction.contextLength = template.contextLength
-                    chat.settings.prediction.batchSize = template.batchSize
-                    chat.settings.prediction.useMetal = template.useMetal
-                    chat.settings.sampling.temperature = template.temperature
-                    chat.settings.sampling.topK = template.topK
-                    chat.settings.sampling.topP = template.topP
-                    chat.settings.prompt.promptFormat = template.promptFormat
+                    chat.applyTemplate(template)
                 }
             }
             

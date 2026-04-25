@@ -2,15 +2,23 @@ import ScrechKit
 
 struct ModelFileCard: View {
     @Environment(ChatAppModel.self) private var appModel
+    @Environment(\.dismiss) private var dismiss
     
     private let model: ModelFile
     
-    private var sizeDescription: String {
-        guard model.isPartialDownload == true else {
-            return model.sizeDescription
+    private var displaySize: String {
+        if model.isPartialDownload == true, let statusText = appModel.downloadStates[completeFileName]?.statusText {
+            return statusText
         }
         
-        return appModel.downloadStates[completeFileName]?.statusText ?? model.sizeDescription
+        guard
+            let localURL = model.localURL,
+            let fileSize = try? localURL.resourceValues(forKeys: [.fileSizeKey]).fileSize
+        else {
+            return "Unknown size"
+        }
+        
+        return fileSize.formatted(.byteCount(style: .file))
     }
     
     private var completeFileName: String {
@@ -37,7 +45,7 @@ struct ModelFileCard: View {
                         Label(model.quantization, systemImage: "tag")
                     }
                     
-                    Label(sizeDescription, systemImage: "internaldrive")
+                    Label(displaySize, systemImage: "internaldrive")
                         .monospacedDigit()
                     
                     if model.isMultimodalProjector {
@@ -59,6 +67,7 @@ struct ModelFileCard: View {
                 if let chat = appModel.selectedChat {
                     Button("Select") {
                         appModel.assignModel(model, to: chat)
+                        dismiss()
                     }
                     .buttonStyle(.bordered)
                     .foregroundStyle(.foreground)

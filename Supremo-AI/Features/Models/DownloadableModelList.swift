@@ -5,6 +5,8 @@ struct DownloadableModelList: View {
     
     var body: some View {
         List {
+            DownloadStorageSummaryView()
+            
             Text("When the first model finishes, it is assigned to the current chat automatically")
             
             ForEach(appModel.downloadableModelFamilies) { family in
@@ -16,5 +18,8 @@ struct DownloadableModelList: View {
             }
         }
         .navigationTitle("Downloads")
+        .task {
+            await appModel.refreshDownloadSizes()
+        }
     }
 }

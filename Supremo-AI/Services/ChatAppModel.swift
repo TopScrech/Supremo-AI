@@ -16,8 +16,10 @@ final class ChatAppModel {
     
     private let store = JSONFileStore()
     private let ragIndexer = RAGIndexer()
+    private let remoteFileSizeResolver = RemoteFileSizeResolver()
     private let inferenceEngine: LocalInferenceEngine = SwiftLlamaInferenceEngine()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "ChatAppModel")
+    private var refreshingDownloadSizes = Set<String>()
     
     var isInferenceBackendAvailable: Bool {
         inferenceEngine.isAvailable
@@ -57,6 +59,26 @@ final class ChatAppModel {
         }
         
         return families
+    }
+    
+    func canDownload(_ model: DownloadableModel) -> Bool {
+        downloadStorageErrorMessage(for: model) == nil
+    }
+    
+    func downloadStorageErrorMessage(for model: DownloadableModel) -> String? {
+        guard let remainingBytes = remainingDownloadBytes(for: model),
+              let availableBytes = StorageCapacity.availableForImportantUsage,
+              remainingBytes > availableBytes else { return nil }
+        
+        let required = remainingBytes.formatted(.byteCount(style: .file))
+        let available = availableBytes.formatted(.byteCount(style: .file))
+        return "Needs \(required), but only \(available) is available"
+    }
+    
+    func refreshDownloadSizes() async {
+        for model in downloadableModels where model.sizeBytes == nil {
+            await refreshDownloadSize(for: model)
+        }
     }
     
     func load() {
@@ -183,7 +205,7 @@ final class ChatAppModel {
         var updated = chat
         updated.modelFileID = model.id
         updated.modelName = model.displayName
-        updated.settings.inference = model.family
+        updated.applyAutomaticTemplate(for: model)
         modelInitializationStates[chat.id] = .idle
         modelInitializationMessages[chat.id] = nil
         updateChat(updated)
@@ -290,7 +312,7 @@ final class ChatAppModel {
             }
             try FileManager.default.copyItem(at: url, to: destination)
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
-            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: "Local", family: .llama, sizeDescription: "Imported")
+            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: "Local", family: .llama)
             modelFiles.append(model)
             if let selectedChat, selectedChat.modelFileID == nil {
                 assignModel(model, to: selectedChat)
@@ -304,7 +326,7 @@ final class ChatAppModel {
     
     func registerDownloadedModel(_ downloadableModel: DownloadableModel, localURL: URL) {
         modelFiles.removeAll { $0.fileName == downloadableModel.fileName || $0.fileName == "\(downloadableModel.fileName).download" }
-        let model = ModelFile(displayName: downloadableModel.familyName, fileName: downloadableModel.fileName, localURL: localURL, remoteURL: downloadableModel.url, quantization: downloadableModel.quantization, family: downloadableModel.inference, sizeDescription: downloadableModel.sizeDescription)
+        let model = ModelFile(displayName: downloadableModel.familyName, fileName: downloadableModel.fileName, localURL: localURL, remoteURL: downloadableModel.url, quantization: downloadableModel.quantization, family: downloadableModel.inference)
         modelFiles.append(model)
         if let selectedChat, selectedChat.modelFileID == nil {
             assignModel(model, to: selectedChat)
@@ -316,28 +338,36 @@ final class ChatAppModel {
     func download(_ model: DownloadableModel) async {
         guard downloadStates[model.fileName]?.isDownloading != true else { return }
         
-        let destination = store.modelsURL.appending(path: model.fileName)
-        let partialDestination = store.modelsURL.appending(path: "\(model.fileName).download")
+        await refreshDownloadSize(for: model)
+        let currentModel = downloadableModels.first { $0.fileName == model.fileName } ?? model
+        
+        let destination = store.modelsURL.appending(path: currentModel.fileName)
+        let partialDestination = store.modelsURL.appending(path: "\(currentModel.fileName).download")
         
         do {
-            logger.info("Downloading \(model.fileName, privacy: .public)")
+            logger.info("Downloading \(currentModel.fileName, privacy: .public)")
             try store.ensureDirectories()
             let existingBytes = fileSize(for: partialDestination)
-            downloadStates[model.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: model.sizeBytes, isDownloading: true)
+            if let errorMessage = downloadStorageErrorMessage(for: currentModel) {
+                downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: errorMessage)
+                return
+            }
+            
+            downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: true)
             
             createPartialDownloadFileIfNeeded(at: partialDestination)
             refreshModelFilesFromDisk()
-            try await downloadFile(from: model.url, to: partialDestination, modelFileName: model.fileName)
+            try await downloadFile(from: currentModel.url, to: partialDestination, modelFileName: currentModel.fileName)
             
             if FileManager.default.fileExists(atPath: destination.path()) {
                 try FileManager.default.removeItem(at: destination)
             }
             try FileManager.default.moveItem(at: partialDestination, to: destination)
-            downloadStates[model.fileName]?.isDownloading = false
-            registerDownloadedModel(model, localURL: destination)
+            downloadStates[currentModel.fileName]?.isDownloading = false
+            registerDownloadedModel(currentModel, localURL: destination)
         } catch {
             refreshModelFilesFromDisk()
-            downloadStates[model.fileName] = DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: model.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription)
+            downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
     }
@@ -386,7 +416,6 @@ final class ChatAppModel {
             fileName: fileName,
             url: remoteURL,
             quantization: model.quantization,
-            sizeDescription: model.sizeDescription,
             sizeBytes: nil,
             inference: model.family
         )
@@ -397,6 +426,32 @@ final class ChatAppModel {
         FileManager.default.createFile(atPath: url.path(), contents: nil)
     }
     
+    private func refreshDownloadSize(for model: DownloadableModel) async {
+        guard model.sizeBytes == nil,
+              refreshingDownloadSizes.contains(model.fileName) == false else { return }
+        
+        refreshingDownloadSizes.insert(model.fileName)
+        defer {
+            refreshingDownloadSizes.remove(model.fileName)
+        }
+        
+        do {
+            let sizeBytes = try await remoteFileSizeResolver.sizeBytes(for: model.url)
+            guard let index = downloadableModels.firstIndex(where: { $0.fileName == model.fileName }) else { return }
+            downloadableModels[index].sizeBytes = sizeBytes
+        } catch {
+            logger.error("Unable to fetch size for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
+    }
+    
+    private func remainingDownloadBytes(for model: DownloadableModel) -> Int64? {
+        let currentModel = downloadableModels.first { $0.fileName == model.fileName } ?? model
+        guard let sizeBytes = currentModel.sizeBytes else { return nil }
+        let partialDestination = store.modelsURL.appending(path: "\(model.fileName).download")
+        let existingBytes = fileSize(for: partialDestination)
+        return Int64(max(sizeBytes - existingBytes, 0))
+    }
+    
     private func fileSize(for url: URL) -> Int {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path()),
               let fileSize = attributes[.size] as? NSNumber else { return 0 }
@@ -405,15 +460,7 @@ final class ChatAppModel {
     
     func applyTemplate(_ template: ChatSettingsTemplate, to chat: ChatConfiguration) {
         var updated = chat
-        updated.settings.modelSettingsTemplate = template.name
-        updated.settings.inference = template.inference
-        updated.settings.prediction.contextLength = template.contextLength
-        updated.settings.prediction.batchSize = template.batchSize
-        updated.settings.prediction.useMetal = template.useMetal
-        updated.settings.sampling.temperature = template.temperature
-        updated.settings.sampling.topK = template.topK
-        updated.settings.sampling.topP = template.topP
-        updated.settings.prompt.promptFormat = template.promptFormat
+        updated.applyTemplate(template)
         updateChat(updated)
     }
     
@@ -458,7 +505,6 @@ final class ChatAppModel {
         let completeFileName = isPartialDownload ? String(url.lastPathComponent.dropLast(".download".count)) : url.lastPathComponent
         let displayName = URL(filePath: completeFileName).deletingPathExtension().lastPathComponent
         let catalogModel = downloadableModels.first { $0.fileName == completeFileName }
-        let fileSize = fileSizeDescription(for: url)
         
         return ModelFile(
             displayName: catalogModel?.familyName ?? displayName,
@@ -467,15 +513,8 @@ final class ChatAppModel {
             remoteURL: catalogModel?.url,
             quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? "Local",
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
-            sizeDescription: isPartialDownload ? "\(fileSize) downloaded" : fileSize,
             isPartialDownload: isPartialDownload
         )
-    }
-    
-    private func fileSizeDescription(for url: URL) -> String {
-        let size = fileSize(for: url)
-        guard size > 0 else { return "0 bytes" }
-        return size.formatted(.byteCount(style: .file))
     }
     
     private func inferredInferenceKind(from fileName: String) -> InferenceKind {

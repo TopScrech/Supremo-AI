@@ -26,7 +26,7 @@ struct ModelSettingsSectionView: View {
             .onChange(of: chat.modelFileID) { _, newValue in
                 if let model = appModel.modelFiles.first(where: { $0.id == newValue }) {
                     chat.modelName = model.displayName
-                    chat.settings.inference = model.family
+                    chat.applyAutomaticTemplate(for: model)
                 }
             }
             
