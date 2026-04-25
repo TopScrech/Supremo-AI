@@ -6,7 +6,7 @@ struct SettingsDetailView: View {
     var body: some View {
         switch screen {
         case .models: ModelsView()
-        case .downloads: DownloadModelsView()
+        case .downloads: DownloadableModelList()
         case .shortcuts: ShortcutsInfoView()
         case .fineTune: FineTuneView()
         case .about: AboutView()

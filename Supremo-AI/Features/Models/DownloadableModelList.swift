@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct DownloadModelsView: View {
+struct DownloadableModelList: View {
     @Environment(ChatAppModel.self) private var appModel
     
     var body: some View {
