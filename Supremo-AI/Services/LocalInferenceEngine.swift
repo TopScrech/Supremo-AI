@@ -93,8 +93,12 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         let fileName = modelURL.lastPathComponent
         return chat.settings.inference == .gemma
             || chat.settings.inference == .phi
+            || chat.settings.inference == .llava
+            || chat.settings.inference == .moondream
             || fileName.localizedStandardContains("gemma")
             || fileName.localizedStandardContains("phi")
+            || fileName.localizedStandardContains("bunny")
+            || fileName.localizedStandardContains("moondream")
             || fileName.localizedStandardContains("llama-3.2")
             || fileName.localizedStandardContains("llama_3.2")
             || fileName.localizedStandardContains("llama 3.2")
