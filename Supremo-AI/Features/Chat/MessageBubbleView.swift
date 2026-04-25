@@ -14,14 +14,8 @@ struct MessageBubbleView: View {
                 Text(message.role.label)
                     .caption()
                     .secondary()
-                if style == .compact {
-                    Text(message.text)
-                        .textSelection(.enabled)
-                } else {
-                    Text(message.text)
-                        .textSelection(.enabled)
-                        .callout()
-                }
+                
+                MessageContentView(message: message, style: style)
             }
             .padding()
             .background(backgroundStyle)

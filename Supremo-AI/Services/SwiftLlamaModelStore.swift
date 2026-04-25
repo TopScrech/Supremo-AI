@@ -13,6 +13,11 @@ actor SwiftLlamaModelStore {
         return try await swiftLlama.start(rawPrompt: prompt)
     }
     
+    func responseStream(modelPath: String, configuration: Configuration, prompt: String) async throws -> AsyncThrowingStream<String, Error> {
+        let swiftLlama = try swiftLlama(modelPath: modelPath, configuration: configuration)
+        return try await swiftLlama.start(for: Prompt(type: .raw, userMessage: prompt))
+    }
+    
     func eject(modelPath: String) {
         guard self.modelPath == modelPath else { return }
         

@@ -55,6 +55,11 @@ struct ChatDetailView: View {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
                     }
+                    .onChange(of: chat.messages.last?.text) { _, _ in
+                        if let lastMessage = chat.messages.last {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
                 }
             }
             

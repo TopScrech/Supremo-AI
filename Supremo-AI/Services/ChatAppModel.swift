@@ -20,6 +20,7 @@ final class ChatAppModel {
     private let inferenceEngine: LocalInferenceEngine = SwiftLlamaInferenceEngine()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "ChatAppModel")
     private var refreshingDownloadSizes = Set<String>()
+    private var typingTask: Task<Void, Never>?
     
     var isInferenceBackendAvailable: Bool {
         inferenceEngine.isAvailable
@@ -85,6 +86,7 @@ final class ChatAppModel {
         do {
             try store.ensureDirectories()
             chats = (try? store.load([ChatConfiguration].self, from: "chats.json")) ?? [ChatConfiguration.sample]
+            finishPersistedTypingAnimations()
             modelFiles = (try? store.load([ModelFile].self, from: "models.json")) ?? []
             refreshModelFilesFromDisk()
             selectedChatID = chats.first?.id
@@ -230,6 +232,8 @@ final class ChatAppModel {
     
     func clearMessages(in chat: ChatConfiguration) {
         guard let index = chats.firstIndex(where: { $0.id == chat.id }) else { return }
+        typingTask?.cancel()
+        typingTask = nil
         chats[index].messages.removeAll()
         chats[index].updatedAt = Date()
         persistStatus()
@@ -263,23 +267,154 @@ final class ChatAppModel {
         ) : []
         
         do {
-            let response = try await inferenceEngine.response(for: trimmedPrompt, chat: generationChat, context: ragContext)
-            guard let updatedIndex = currentChatIndex else { return }
             if !ragContext.isEmpty {
                 let contextText = ragContext.map { "\($0.title): \($0.text)" }.joined(separator: "\n\n")
-                chats[updatedIndex].messages.append(ChatMessage(role: .rag, text: contextText))
+                chats[chatIndex].messages.append(ChatMessage(role: .rag, text: contextText))
             }
-            chats[updatedIndex].messages.append(ChatMessage(role: .assistant, text: response))
-            chats[updatedIndex].updatedAt = Date()
-            logger.info("Generated preview response")
+            
+            let assistantMessage = ChatMessage(role: .assistant, text: "")
+            chats[chatIndex].messages.append(assistantMessage)
+            chats[chatIndex].updatedAt = Date()
+            
+            let responseStream = try await inferenceEngine.responseStream(for: trimmedPrompt, chat: generationChat, context: ragContext)
+            for try await partialResponse in responseStream {
+                updateMessageTarget(assistantMessage.id, in: chatSnapshot.id, text: partialResponse)
+            }
+            
+            updateChatTimestamp(chatSnapshot.id)
+            logger.info("Generated streaming response")
         } catch {
-            guard let updatedIndex = currentChatIndex else { return }
-            chats[updatedIndex].messages.append(ChatMessage(role: .assistant, text: error.localizedDescription))
+            updateLatestAssistantMessage(in: chatSnapshot.id, fallbackText: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
         
         isGenerating = false
         persistStatus()
+    }
+    
+    private func updateMessageTarget(_ messageID: UUID, in chatID: UUID, text: String) {
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }),
+              let messageIndex = chats[chatIndex].messages.firstIndex(where: { $0.id == messageID }) else { return }
+        
+        chats[chatIndex].messages[messageIndex].targetText = text
+        chats[chatIndex].updatedAt = Date()
+        startTypingTaskIfNeeded()
+    }
+    
+    private func updateLatestAssistantMessage(in chatID: UUID, fallbackText: String) {
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }) else { return }
+        
+        if let messageIndex = chats[chatIndex].messages.lastIndex(where: { $0.role == .assistant }) {
+            let existingText = chats[chatIndex].messages[messageIndex].text
+            chats[chatIndex].messages[messageIndex].targetText = existingText.isEmpty ? fallbackText : existingText
+            startTypingTaskIfNeeded()
+        } else {
+            chats[chatIndex].messages.append(ChatMessage(role: .assistant, text: fallbackText))
+        }
+        chats[chatIndex].updatedAt = Date()
+    }
+    
+    private func updateChatTimestamp(_ chatID: UUID) {
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }) else { return }
+        chats[chatIndex].updatedAt = Date()
+    }
+    
+    private func startTypingTaskIfNeeded() {
+        guard typingTask == nil else { return }
+        
+        typingTask = Task { [weak self] in
+            await self?.runTypingLoop()
+        }
+    }
+    
+    private func runTypingLoop() async {
+        while !Task.isCancelled {
+            guard let pendingMessageIndex = pendingTypingMessageIndex else {
+                break
+            }
+            
+            let chatIndex = pendingMessageIndex.chat
+            let messageIndex = pendingMessageIndex.message
+            let message = chats[chatIndex].messages[messageIndex]
+            let targetText = message.targetText ?? message.text
+            
+            if message.text == targetText {
+                if !isGenerating {
+                    break
+                }
+                
+                do {
+                    try await Task.sleep(for: .milliseconds(40))
+                } catch {
+                    break
+                }
+                
+                continue
+            }
+            
+            if !targetText.hasPrefix(message.text) {
+                let commonPrefixCount = commonPrefixCount(between: message.text, and: targetText)
+                chats[chatIndex].messages[messageIndex].text = String(targetText.prefix(commonPrefixCount))
+                continue
+            }
+            
+            let remainingCount = targetText.count - message.text.count
+            let step = switch remainingCount {
+            case 25...: 4
+            case 10...24: 2
+            default: 1
+            }
+            
+            chats[chatIndex].messages[messageIndex].text = String(targetText.prefix(min(message.text.count + step, targetText.count)))
+            chats[chatIndex].updatedAt = Date()
+            
+            do {
+                try await Task.sleep(for: .milliseconds(18))
+            } catch {
+                break
+            }
+        }
+        
+        typingTask = nil
+        finishPersistedTypingAnimations()
+        persistStatus()
+    }
+    
+    private func commonPrefixCount(between lhs: String, and rhs: String) -> Int {
+        zip(lhs, rhs)
+            .prefix { $0 == $1 }
+            .count
+    }
+    
+    private var pendingTypingMessageIndex: (chat: Int, message: Int)? {
+        for chatIndex in chats.indices {
+            if let messageIndex = chats[chatIndex].messages.lastIndex(where: {
+                $0.role == .assistant && $0.text != ($0.targetText ?? $0.text)
+            }) {
+                return (chatIndex, messageIndex)
+            }
+        }
+        
+        if isGenerating {
+            for chatIndex in chats.indices {
+                if let messageIndex = chats[chatIndex].messages.lastIndex(where: { $0.role == .assistant }) {
+                    return (chatIndex, messageIndex)
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func finishPersistedTypingAnimations() {
+        for chatIndex in chats.indices {
+            for messageIndex in chats[chatIndex].messages.indices {
+                if let targetText = chats[chatIndex].messages[messageIndex].targetText {
+                    chats[chatIndex].messages[messageIndex].text = targetText
+                    chats[chatIndex].messages[messageIndex].targetText = nil
+                }
+            }
+        }
     }
     
     func addDocument(title: String, text: String, to chat: ChatConfiguration) {

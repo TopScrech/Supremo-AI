@@ -7,6 +7,7 @@ protocol LocalInferenceEngine {
     func prepare(chat: ChatConfiguration) async throws
     func eject(chat: ChatConfiguration) async
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String
+    func responseStream(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> AsyncThrowingStream<String, Error>
 }
 
 enum InferenceEngineError: LocalizedError {
@@ -48,6 +49,15 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
         return try await swiftLlamaResponse(for: input, chat: chat, modelURL: modelURL)
     }
     
+    func responseStream(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> AsyncThrowingStream<String, Error> {
+        guard let modelURL = chat.modelFileURL else {
+            throw InferenceEngineError.backendUnavailable
+        }
+        
+        let input = promptWithRAG(prompt: prompt, context: context)
+        return try await swiftLlamaResponseStream(for: input, chat: chat, modelURL: modelURL)
+    }
+    
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
@@ -59,6 +69,33 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
         )
         logger.info("Finished SwiftLlama response. outputCharacters=\(rawOutput.count, privacy: .public)")
         return cleanedSwiftLlamaOutput(rawOutput)
+    }
+    
+    private func swiftLlamaResponseStream(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> AsyncThrowingStream<String, Error> {
+        let configuration = swiftLlamaConfiguration(for: chat)
+        let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
+        logger.info("Starting SwiftLlama response stream. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        let rawStream = try await Self.swiftLlamaStore.responseStream(
+            modelPath: modelURL.path(),
+            configuration: configuration,
+            prompt: formattedPrompt
+        )
+        
+        return AsyncThrowingStream { continuation in
+            Task {
+                var rawOutput = ""
+                do {
+                    for try await delta in rawStream {
+                        rawOutput += delta
+                        continuation.yield(cleanedSwiftLlamaOutput(rawOutput))
+                    }
+                    logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
     
     private func swiftLlamaConfiguration(for chat: ChatConfiguration) -> Configuration {
@@ -103,12 +140,7 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
     }
     
     private func cleanedSwiftLlamaOutput(_ output: String) -> String {
-        var cleanedOutput = output
-        if let thoughtEnd = cleanedOutput.range(of: "<channel|>") {
-            cleanedOutput = String(cleanedOutput[thoughtEnd.upperBound...])
-        }
-        
-        return cleanedOutput
+        output
             .replacingOccurrences(of: "<turn|>", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
