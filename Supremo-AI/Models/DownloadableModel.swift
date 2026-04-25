@@ -29,6 +29,8 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
             return "Bunny"
         } else if name.hasPrefix("llama") {
             return "Llama"
+        } else if name.hasPrefix("qwen") {
+            return "Qwen"
         } else if name.hasPrefix("moondream") {
             return "Moondream"
         } else {

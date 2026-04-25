@@ -35,7 +35,7 @@ struct ChatListView: View {
                     showSettings = true
                 }
             }
-            
+#if !os(macOS)
             ToolbarItem(placement: .bottomBar) {
                 TextField("  Search chats", text: $appModel.searchText)
             }
@@ -47,6 +47,7 @@ struct ChatListView: View {
                     appModel.createChat()
                 }
             }
+#endif
         }
     }
 }

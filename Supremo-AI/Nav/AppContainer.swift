@@ -19,9 +19,13 @@ struct AppContainer: View {
             }
         }
         .sheet(isPresented: $showSettings) {
+            #if os(macOS)
+            SettingsHomeView(selectedScreen: $selectedSettingsScreen)
+            #else
             NavigationStack {
                 SettingsHomeView(selectedScreen: $selectedSettingsScreen)
             }
+            #endif
         }
         .task {
             if appModel.chats.isEmpty {
