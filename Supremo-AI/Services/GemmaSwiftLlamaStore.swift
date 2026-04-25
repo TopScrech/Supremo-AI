@@ -1,6 +1,6 @@
 import SwiftLlama
 
-actor Gemma4SwiftLlamaStore {
+actor GemmaSwiftLlamaStore {
     private var modelPath = ""
     private var swiftLlama: SwiftLlama?
     

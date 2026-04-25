@@ -23,7 +23,7 @@ enum InferenceEngineError: LocalizedError {
 
 struct LLMFarmInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
-    private static let gemma4Store = Gemma4SwiftLlamaStore()
+    private static let gemmaStore = GemmaSwiftLlamaStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "LocalInferenceEngine")
     
     func prepare(chat: ChatConfiguration) async throws {
@@ -32,7 +32,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         }
         
         if usesSwiftLlama(for: chat, modelURL: modelURL) {
-            try await Self.gemma4Store.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
+            try await Self.gemmaStore.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
             return
         }
         
@@ -49,7 +49,7 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
         guard let modelURL = chat.modelFileURL else { return }
         
         if usesSwiftLlama(for: chat, modelURL: modelURL) {
-            await Self.gemma4Store.eject(modelPath: modelURL.path())
+            await Self.gemmaStore.eject(modelPath: modelURL.path())
         }
     }
     
@@ -90,19 +90,19 @@ struct LLMFarmInferenceEngine: LocalInferenceEngine {
     }
     
     private func usesSwiftLlama(for chat: ChatConfiguration, modelURL: URL) -> Bool {
-        chat.settings.modelSettingsTemplate == "Gemma 4" || modelURL.lastPathComponent.localizedStandardContains("gemma-4")
+        chat.settings.inference == .gemma || modelURL.lastPathComponent.localizedStandardContains("gemma")
     }
     
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
-        logger.info("Starting Gemma 4 response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
-        let rawOutput = try await Self.gemma4Store.response(
+        logger.info("Starting Gemma response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        let rawOutput = try await Self.gemmaStore.response(
             modelPath: modelURL.path(),
             configuration: configuration,
             prompt: formattedPrompt
         )
-        logger.info("Finished Gemma 4 response. outputCharacters=\(rawOutput.count, privacy: .public)")
+        logger.info("Finished Gemma response. outputCharacters=\(rawOutput.count, privacy: .public)")
         return cleanedSwiftLlamaOutput(rawOutput)
     }
     
