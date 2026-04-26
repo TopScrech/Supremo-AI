@@ -32,6 +32,7 @@ struct MessageContentView: View {
         }
         
         let channelSegments = parsedChannelSegments(in: message.text)
+        
         guard !channelSegments.isEmpty else {
             if let channelEnd = message.text.range(of: "<channel|>") {
                 let thought = String(message.text[..<channelEnd.lowerBound])
@@ -88,6 +89,7 @@ struct MessageContentView: View {
             }
             
             searchStart = nextChannelStart
+            
             if searchStart == text.endIndex {
                 break
             }

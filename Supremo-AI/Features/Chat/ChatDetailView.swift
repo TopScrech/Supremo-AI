@@ -52,12 +52,12 @@ struct ChatDetailView: View {
                         }
                         .padding()
                     }
-                    .onChange(of: chat.messages.count) { _, _ in
+                    .onChange(of: chat.messages.count) {
                         if let lastMessage = chat.messages.last {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
                     }
-                    .onChange(of: chat.messages.last?.text) { _, _ in
+                    .onChange(of: chat.messages.last?.text) {
                         if let lastMessage = chat.messages.last {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
@@ -112,6 +112,7 @@ struct ChatDetailView: View {
     private func sendPrompt() {
         let text = prompt
         prompt = ""
+        
         Task {
             await appModel.sendPrompt(text, useRAG: false)
         }
