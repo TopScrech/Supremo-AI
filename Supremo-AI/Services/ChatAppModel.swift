@@ -63,17 +63,29 @@ final class ChatAppModel {
     }
     
     func canDownload(_ model: DownloadableModel) -> Bool {
-        downloadStorageErrorMessage(for: model) == nil
+        downloadCapacityErrorMessage(for: model) == nil
     }
     
-    func downloadStorageErrorMessage(for model: DownloadableModel) -> String? {
-        guard let remainingBytes = remainingDownloadBytes(for: model),
-              let availableBytes = StorageCapacity.availableForImportantUsage,
-              remainingBytes > availableBytes else { return nil }
+    func downloadCapacityErrorMessage(for model: DownloadableModel) -> String? {
+        guard
+            let remainingBytes = remainingDownloadBytes(for: model),
+            let availableStorageBytes = StorageCapacity.availableForImportantUsage
+        else {
+            return nil
+        }
         
-        let required = remainingBytes.formatted(.byteCount(style: .file))
-        let available = availableBytes.formatted(.byteCount(style: .file))
-        return "Needs \(required), but only \(available) is available"
+        if remainingBytes > availableStorageBytes {
+            return "Too large for the available storage"
+        }
+        
+        guard let modelSizeBytes = model.sizeBytes else { return nil }
+        let availableMemoryBytes = StorageCapacity.availableMemory
+        
+        if modelSizeBytes > availableMemoryBytes {
+            return "Too large for the available VRAM"
+        }
+        
+        return nil
     }
     
     func refreshDownloadSizes() async {
@@ -483,7 +495,7 @@ final class ChatAppModel {
             logger.info("Downloading \(currentModel.fileName, privacy: .public)")
             try store.ensureDirectories()
             let existingBytes = fileSize(for: partialDestination)
-            if let errorMessage = downloadStorageErrorMessage(for: currentModel) {
+            if let errorMessage = downloadCapacityErrorMessage(for: currentModel) {
                 downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: errorMessage)
                 return
             }

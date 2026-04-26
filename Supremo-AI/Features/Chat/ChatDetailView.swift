@@ -4,7 +4,6 @@ struct ChatDetailView: View {
     @Environment(ChatAppModel.self) private var appModel
     
     @State private var prompt = ""
-    @State private var useRAG = false
     @State private var showSettings = false
     @State private var showModelInstall = false
     let chat: ChatConfiguration
@@ -63,7 +62,7 @@ struct ChatDetailView: View {
                 }
             }
             
-            ChatInputBar(prompt: $prompt, useRAG: $useRAG, isGenerating: appModel.isGenerating, sendAction: sendPrompt)
+            ChatInputBar(prompt: $prompt, isGenerating: appModel.isGenerating, sendAction: sendPrompt)
                 .padding()
                 .disabled(!appModel.canRunChat(chat))
         }
@@ -111,7 +110,7 @@ struct ChatDetailView: View {
         let text = prompt
         prompt = ""
         Task {
-            await appModel.sendPrompt(text, useRAG: useRAG)
+            await appModel.sendPrompt(text, useRAG: false)
         }
     }
     

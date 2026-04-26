@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA50BB2F9BD04C00BCE00A /* ScrechKit */; };
 		F3AA60032FA0000000BCE00A /* SwiftLlama in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA60022FA0000000BCE00A /* SwiftLlama */; };
+		F3AA61012FA1000000BCE00A /* ChitChat in Frameworks */ = {isa = PBXBuildFile; productRef = F3AA61032FA1000000BCE00A /* ChitChat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		F3AA4F212F9BCECF00BCE00A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				F3AA61012FA1000000BCE00A /* ChitChat in Frameworks */,
 				F3AA50BC2F9BD04C00BCE00A /* ScrechKit in Frameworks */,
 				F3AA60032FA0000000BCE00A /* SwiftLlama in Frameworks */,
 			);
@@ -72,6 +74,7 @@
 			);
 			name = "Supremo-AI";
 			packageProductDependencies = (
+				F3AA61032FA1000000BCE00A /* ChitChat */,
 				F3AA50BB2F9BD04C00BCE00A /* ScrechKit */,
 				F3AA60022FA0000000BCE00A /* SwiftLlama */,
 			);
@@ -104,6 +107,7 @@
 			mainGroup = F3AA4F1B2F9BCECF00BCE00A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				F3AA61022FA1000000BCE00A /* XCRemoteSwiftPackageReference "Chit-Chat" */,
 				F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */,
 				F3AA60012FA0000000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/SwiftLlama" */,
 			);
@@ -255,6 +259,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Supremo-AI/Supremo-AI.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 8FQUA2F388;
@@ -309,6 +314,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Supremo-AI/Supremo-AI.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 8FQUA2F388;
@@ -395,6 +401,14 @@
 				kind = branch;
 			};
 		};
+		F3AA61022FA1000000BCE00A /* XCRemoteSwiftPackageReference "Chit-Chat" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TopScrech/Chit-Chat";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -407,6 +421,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F3AA60012FA0000000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/SwiftLlama" */;
 			productName = SwiftLlama;
+		};
+		F3AA61032FA1000000BCE00A /* ChitChat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3AA61022FA1000000BCE00A /* XCRemoteSwiftPackageReference "Chit-Chat" */;
+			productName = ChitChat;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

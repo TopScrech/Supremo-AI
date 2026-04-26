@@ -25,6 +25,8 @@ struct BasicChatSettings: View {
                     Text($0.label).tag($0)
                 }
             }
+            
+            Toggle("Enable RAG", isOn: $chat.settings.rag.isEnabled)
         }
     }
 }

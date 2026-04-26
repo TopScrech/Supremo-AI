@@ -5,8 +5,6 @@ struct RagSettingsSection: View {
     
     var body: some View {
         Section("RAG") {
-            Toggle("Enable RAG", isOn: $settings.isEnabled)
-            
             Picker("Embedding Model", selection: $settings.embeddingModel) {
                 ForEach(EmbeddingModel.allCases) {
                     Text($0.label)

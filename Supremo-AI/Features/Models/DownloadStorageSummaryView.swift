@@ -2,26 +2,32 @@ import ScrechKit
 
 struct DownloadStorageSummaryView: View {
     @State private var freeStorageDescription = "Checking"
+    @State private var availableMemoryDescription = "Checking"
     
     var body: some View {
-        LabeledContent {
-            Text(freeStorageDescription)
-                .monospacedDigit()
-                .secondary()
-        } label: {
-            Label("Free Storage", systemImage: "internaldrive")
+        Group {
+            LabeledContentRow(title: "Free Storage", systemImage: "internaldrive", value: freeStorageDescription)
+            LabeledContentRow(title: "Available VRAM", systemImage: "memorychip", value: availableMemoryDescription)
         }
         .task {
-            updateFreeStorage()
+            updateStorageSummary()
         }
     }
     
-    private func updateFreeStorage() {
-        guard let bytes = StorageCapacity.availableForImportantUsage else {
-            freeStorageDescription = "Unavailable"
-            return
-        }
+    private func updateStorageSummary() {
+        freeStorageDescription = formattedByteCount(StorageCapacity.availableForImportantUsage)
+        availableMemoryDescription = formattedByteCount(StorageCapacity.availableMemory)
+    }
+    
+    private func formattedByteCount(_ bytes: Int64?) -> String {
+        guard let bytes else { return "Unavailable" }
         
-        freeStorageDescription = bytes.formatted(.byteCount(style: .file))
+        return bytes.formatted(.byteCount(style: .file))
+    }
+    
+    private func formattedByteCount(_ bytes: UInt64?) -> String {
+        guard let bytes else { return "Unavailable" }
+        
+        return bytes.formatted(.byteCount(style: .file))
     }
 }
