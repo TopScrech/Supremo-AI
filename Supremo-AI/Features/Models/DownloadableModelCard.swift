@@ -18,8 +18,8 @@ struct DownloadableModelCard: View {
         
         let capacityErrorMessage = appModel.downloadCapacityErrorMessage(for: model)
         
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .center) {
+        HStack {
+            VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(model.familyName)
                         .headline()
@@ -33,45 +33,45 @@ struct DownloadableModelCard: View {
                     .foregroundStyle(.tertiary)
                 }
                 
-                Spacer()
-                
-                if isDownloaded {
-                    SFButton("checkmark") {}
-                        .foregroundStyle(.green)
-                        .headline()
-                        .disabled(true)
-                        .buttonStyle(.glassProminent)
-                        .buttonBorderShape(.circle)
+                if let downloadState, downloadState.isDownloading {
+                    ProgressView(value: downloadState.progress)
                     
-                } else if downloadState?.isDownloading != true {
-                    SFButton("arrow.down") {
-                        Task {
-                            await appModel.download(model)
-                        }
-                    }
-                    .disabled(capacityErrorMessage != nil)
-                    .buttonStyle(.glassProminent)
-                    .buttonBorderShape(.circle)
+                    Text(downloadState.statusText)
+                        .caption()
+                        .secondary()
+                        .monospacedDigit()
+                    
+                } else if let downloadState, let errorMessage = downloadState.errorMessage {
+                    Text(errorMessage)
+                        .caption()
+                        .foregroundStyle(.red)
+                    
+                } else if let capacityErrorMessage {
+                    Text(capacityErrorMessage)
+                        .caption()
+                        .foregroundStyle(.red)
                 }
             }
             
-            if let downloadState, downloadState.isDownloading {
-                ProgressView(value: downloadState.progress)
+            Spacer()
+            
+            if isDownloaded {
+                SFButton("checkmark") {}
+                    .foregroundStyle(.green)
+                    .headline()
+                    .disabled(true)
+                    .buttonStyle(.glassProminent)
+                    .buttonBorderShape(.circle)
                 
-                Text(downloadState.statusText)
-                    .caption()
-                    .secondary()
-                    .monospacedDigit()
-                
-            } else if let downloadState, let errorMessage = downloadState.errorMessage {
-                Text(errorMessage)
-                    .caption()
-                    .foregroundStyle(.red)
-                
-            } else if let capacityErrorMessage {
-                Text(capacityErrorMessage)
-                    .caption()
-                    .foregroundStyle(.red)
+            } else if downloadState?.isDownloading != true {
+                SFButton("arrow.down") {
+                    Task {
+                        await appModel.download(model)
+                    }
+                }
+                .disabled(capacityErrorMessage != nil)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.circle)
             }
         }
         .contextMenu {
