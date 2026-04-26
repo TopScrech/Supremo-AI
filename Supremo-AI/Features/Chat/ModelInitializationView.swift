@@ -10,7 +10,7 @@ struct ModelInitializationView: View {
     
     var body: some View {
         ContentUnavailableView {
-            Label(title, systemImage: systemImage)
+            Label(state.title, systemImage: state.systemImage)
         } description: {
             Text(description)
         } actions: {
@@ -31,42 +31,12 @@ struct ModelInitializationView: View {
         }
     }
     
-    private var title: String {
-        switch state {
-        case .initializing:
-            "Initializing Model"
-        case .failed:
-            "Model Initialization Failed"
-        case .ready:
-            "Model Ready"
-        case .idle:
-            "Initialize Model"
-        }
-    }
-    
     private var description: String {
         switch state {
-        case .initializing:
-            "Loading \(chat.modelName) before the first message"
-        case .failed:
-            message ?? "The selected model could not be loaded"
-        case .ready:
-            "\(chat.modelName) is ready for chat"
-        case .idle:
-            "Load \(chat.modelName) before sending messages"
-        }
-    }
-    
-    private var systemImage: String {
-        switch state {
-        case .initializing:
-            "cpu"
-        case .failed:
-            "exclamationmark.triangle"
-        case .ready:
-            "checkmark.circle"
-        case .idle:
-            "power"
+        case .initializing: "Loading \(chat.modelName) before the first message"
+        case .failed: message ?? "The selected model could not be loaded"
+        case .ready: "\(chat.modelName) is ready for chat"
+        case .idle: "Load \(chat.modelName) before sending messages"
         }
     }
     
