@@ -6,8 +6,8 @@ struct DownloadStorageSummaryView: View {
     
     var body: some View {
         Group {
-            LabeledContentRow(title: "Free Storage", systemImage: "internaldrive", value: freeStorageDescription)
-            LabeledContentRow(title: "Available VRAM", systemImage: "memorychip", value: availableMemoryDescription)
+            LabeledContentRow("Free Storage", systemImage: "internaldrive", value: freeStorageDescription)
+            LabeledContentRow("Available VRAM", systemImage: "memorychip", value: availableMemoryDescription)
         }
         .task {
             updateStorageSummary()
