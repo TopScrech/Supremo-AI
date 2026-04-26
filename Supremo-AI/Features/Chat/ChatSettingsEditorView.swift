@@ -26,9 +26,6 @@ struct ChatSettingsEditorView: View {
                 case .basic:
                     BasicChatSettings(chat: $draft)
                     
-                case .model:
-                    ModelSettingsSectionView(chat: $draft)
-                    
                 case .prediction:
                     PredictionSettingsSectionView(settings: $draft.settings.prediction)
                     
@@ -39,13 +36,7 @@ struct ChatSettingsEditorView: View {
                     SamplingSettingsSectionView(settings: $draft.settings.sampling)
                     
                 case .rag:
-                    RagSettingsSection(settings: $draft.settings.rag)
-                    
-                case .documents:
-                    DocumentsView(chat: draft)
-                    
-                case .advanced:
-                    AdvancedSettingsSection(chat: $draft)
+                    RagSettingsSection(chat: $draft)
                 }
             }
         }

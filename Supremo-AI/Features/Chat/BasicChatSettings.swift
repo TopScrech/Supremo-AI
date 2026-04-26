@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct BasicChatSettings: View {
     @Binding var chat: ChatConfiguration
@@ -7,6 +7,13 @@ struct BasicChatSettings: View {
         Section("Basic Settings") {
             TextField("Title", text: $chat.title)
             TextField("Model name", text: $chat.modelName)
+
+            Picker("Inference", selection: $chat.settings.inference) {
+                ForEach(InferenceKind.allCases) {
+                    Text($0.label)
+                        .tag($0)
+                }
+            }
             
             Picker("Template", selection: $chat.settings.modelSettingsTemplate) {
                 ForEach(ChatSettingsTemplate.builtIns) {
@@ -22,11 +29,23 @@ struct BasicChatSettings: View {
             
             Picker("Chat Style", selection: $chat.settings.style) {
                 ForEach(ChatStyle.allCases) {
-                    Text($0.label).tag($0)
+                    Text($0.label)
+                        .tag($0)
                 }
             }
             
-            Toggle("Enable RAG", isOn: $chat.settings.rag.isEnabled)
+            Toggle("RAG", isOn: $chat.settings.rag.isEnabled)
+            Toggle("Metal", isOn: $chat.settings.prediction.useMetal)
+            Toggle("CLIP Metal", isOn: $chat.settings.prediction.useClipMetal)
+        }
+        
+        Section("Info") {
+            Text(chat.id.uuidString)
+                .caption()
+                .textSelection(.enabled)
+            
+            LabeledContent("Created", value: chat.createdAt, format: .dateTime)
+            LabeledContent("Updated", value: chat.updatedAt, format: .dateTime)
         }
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 enum ChatSettingsSection: String, CaseIterable, Identifiable {
-    case basic, model, prediction, prompt, sampling, rag, documents, advanced
+    case basic, prediction, prompt, sampling, rag
     
     var id: String { rawValue }
     
