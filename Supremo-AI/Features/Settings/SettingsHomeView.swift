@@ -21,11 +21,12 @@ struct SettingsHomeView: View {
     }
     
     private var settingsContent: some View {
-        VStack(spacing: 0) {
-            SettingsSectionPicker($selectedScreen)
-                .padding()
-            
-            SettingsDetailView(screen: selectedScreen)
+        TabView(selection: $selectedScreen) {
+            ForEach(SettingsScreen.allCases) { screen in
+                Tab(screen.label, systemImage: screen.systemImage, value: screen) {
+                    SettingsDetailView(screen: screen)
+                }
+            }
         }
         .navigationTitle("Settings")
     }
