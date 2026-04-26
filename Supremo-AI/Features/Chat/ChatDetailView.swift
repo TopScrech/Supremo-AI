@@ -3,6 +3,9 @@ import SwiftUI
 struct ChatDetailView: View {
     @Environment(ChatAppModel.self) private var appModel
     
+    @Binding var selectedSettingsScreen: SettingsScreen
+    @Binding var showAppSettings: Bool
+    
     @State private var prompt = ""
     @State private var showSettings = false
     @State private var showModelInstall = false
@@ -16,7 +19,8 @@ struct ChatDetailView: View {
                     installAction: {
                         showModelInstall = true
                     }, editAction: {
-                        showSettings = true
+                        selectedSettingsScreen = .models
+                        showAppSettings = true
                     }
                 )
             } else if !appModel.isInferenceBackendAvailable {
@@ -31,8 +35,7 @@ struct ChatDetailView: View {
                     initializeAction: initializeModel,
                     ejectAction: {
                         ejectModel()
-                    },
-                    editAction: {
+                    }, editAction: {
                         showSettings = true
                     }
                 )

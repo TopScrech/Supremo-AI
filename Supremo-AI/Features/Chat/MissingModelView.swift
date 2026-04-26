@@ -12,11 +12,11 @@ struct MissingModelView: View {
             Text("Install a GGUF model or select an imported model before chatting")
         } actions: {
             HStack {
+                Button("Select Model", systemImage: "slider.horizontal.3", action: editAction)
+                    .buttonStyle(.bordered)
+                
                 Button("Install Model", systemImage: "arrow.down.circle", action: installAction)
                     .buttonStyle(.borderedProminent)
-                
-                Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
-                    .buttonStyle(.bordered)
             }
         }
     }

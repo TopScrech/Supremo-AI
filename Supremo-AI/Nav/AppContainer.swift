@@ -13,7 +13,11 @@ struct AppContainer: View {
             ChatListView(showSettings: $showSettings)
         } detail: {
             if let chat = appModel.selectedChat {
-                ChatDetailView(chat: chat)
+                ChatDetailView(
+                    selectedSettingsScreen: $selectedSettingsScreen,
+                    showAppSettings: $showSettings,
+                    chat: chat
+                )
             } else {
                 EmptyChatView()
             }
