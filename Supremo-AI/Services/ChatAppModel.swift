@@ -134,6 +134,15 @@ final class ChatAppModel {
         persistStatus()
     }
     
+    func renameChat(_ chat: ChatConfiguration, title: String) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty, let index = chats.firstIndex(where: { $0.id == chat.id }) else { return }
+        
+        chats[index].title = trimmedTitle
+        chats[index].updatedAt = Date()
+        persistStatus()
+    }
+    
     func deleteChat(_ chat: ChatConfiguration) {
         let wasSelected = selectedChatID == chat.id
         chats.removeAll { $0.id == chat.id }
