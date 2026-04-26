@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct ModelSettingsSectionView: View {
-    @Environment(ChatAppModel.self) private var appModel
-    
     @Binding var chat: ChatConfiguration
     
     var body: some View {
@@ -13,23 +11,7 @@ struct ModelSettingsSectionView: View {
                         .tag($0)
                 }
             }
-            
-            Picker("Local Model", selection: $chat.modelFileID) {
-                Text("None")
-                    .tag(UUID?.none)
-                
-                ForEach(appModel.modelFiles) {
-                    Text($0.displayName)
-                        .tag(UUID?.some($0.id))
-                }
-            }
-            .onChange(of: chat.modelFileID) { _, newValue in
-                if let model = appModel.modelFiles.first(where: { $0.id == newValue }) {
-                    chat.modelName = model.displayName
-                    chat.applyAutomaticTemplate(for: model)
-                }
-            }
-            
+
             Toggle("Metal", isOn: $chat.settings.prediction.useMetal)
             Toggle("CLIP Metal", isOn: $chat.settings.prediction.useClipMetal)
         }
