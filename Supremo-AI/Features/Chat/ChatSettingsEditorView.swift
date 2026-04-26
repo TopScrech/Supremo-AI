@@ -41,6 +41,7 @@ struct ChatSettingsEditorView: View {
             }
         }
         .navigationTitle(draft.title)
+        .scrollIndicators(.never)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", systemImage: "xmark") {

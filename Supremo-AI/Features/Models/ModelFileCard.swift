@@ -69,7 +69,7 @@ struct ModelFileCard: View {
                         appModel.assignModel(model, to: chat)
                         dismiss()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glass)
                     .foregroundStyle(.foreground)
                 }
             } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
