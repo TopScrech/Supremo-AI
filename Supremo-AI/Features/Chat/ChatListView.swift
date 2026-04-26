@@ -12,7 +12,7 @@ struct ChatListView: View {
         
         List(selection: $appModel.selectedChatID) {
             ForEach(appModel.filteredChats) { chat in
-                ChatRowView(chat: chat)
+                ChatRowView(chat)
                     .tag(chat.id)
                     .swipeActions {
                         Button("Delete", systemImage: "trash", role: .destructive) {

@@ -1,7 +1,11 @@
 import ScrechKit
 
 struct ChatRowView: View {
-    let chat: ChatConfiguration
+    private let chat: ChatConfiguration
+    
+    init(_ chat: ChatConfiguration) {
+        self.chat = chat
+    }
     
     var body: some View {
         VStack(alignment: .leading) {
