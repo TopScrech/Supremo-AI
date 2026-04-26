@@ -4,7 +4,7 @@ struct SettingsHomeView: View {
     @Binding var selectedScreen: SettingsScreen
     
     var body: some View {
-        #if os(macOS)
+#if os(macOS)
         NavigationSplitView {
             List(SettingsScreen.allCases, selection: $selectedScreen) {
                 Label($0.label, systemImage: $0.systemImage)
@@ -15,9 +15,9 @@ struct SettingsHomeView: View {
             SettingsDetailView(screen: selectedScreen)
         }
         .frame(minWidth: 720, minHeight: 520)
-        #else
+#else
         settingsContent
-        #endif
+#endif
     }
     
     private var settingsContent: some View {
