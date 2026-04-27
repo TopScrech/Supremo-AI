@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PromptSettingsSectionView: View {
+struct PromptSettingsSection: View {
     @Binding var settings: PromptSettings
     
     var body: some View {

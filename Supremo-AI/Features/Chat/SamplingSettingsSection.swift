@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SamplingSettingsSectionView: View {
+struct SamplingSettingsSection: View {
     @Binding var settings: SamplingSettings
     
     var body: some View {

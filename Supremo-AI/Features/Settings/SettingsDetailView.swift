@@ -5,7 +5,7 @@ struct SettingsDetailView: View {
     
     var body: some View {
         switch screen {
-        case .general: GeneralSettingsView()
+        case .general: GeneralSettings()
         case .models: ModelsView()
         case .downloads: DownloadableModelList()
         case .shortcuts: ShortcutsInfoView()

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct GeneralSettingsView: View {
+struct GeneralSettings: View {
     @AppStorage("disableStatusBar") private var disableStatusBar = false
     
     var body: some View {

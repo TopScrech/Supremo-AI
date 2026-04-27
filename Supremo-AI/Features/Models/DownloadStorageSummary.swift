@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct DownloadStorageSummaryView: View {
+struct DownloadStorageSummary: View {
     @State private var freeStorageDescription = "Checking"
     @State private var availableMemoryDescription = "Checking"
     

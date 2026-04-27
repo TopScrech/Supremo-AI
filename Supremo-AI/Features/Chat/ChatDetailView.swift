@@ -24,7 +24,7 @@ struct ChatDetailView: View {
                     }
                 )
             } else if !appModel.isInferenceBackendAvailable {
-                MissingInferenceBackendView(chat: chat) {
+                MissingInferenceBackend(chat: chat) {
                     showModelInstall = true
                 }
             } else if !appModel.isModelInitialized(for: chat) {
@@ -99,7 +99,7 @@ struct ChatDetailView: View {
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack {
-                ChatSettingsEditorView(chat: chat)
+                ChatSettingsEditor(chat: chat)
             }
         }
         .sheet(isPresented: $showModelInstall) {

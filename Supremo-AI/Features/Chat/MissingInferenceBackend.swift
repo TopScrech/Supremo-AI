@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MissingInferenceBackendView: View {
+struct MissingInferenceBackend: View {
     let chat: ChatConfiguration
     let installAction: () -> Void
     

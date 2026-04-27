@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ChatSettingsEditorView: View {
+struct ChatSettingsEditor: View {
     @Environment(ChatAppModel.self) private var appModel
     @Environment(\.dismiss) private var dismiss
     
@@ -27,13 +27,13 @@ struct ChatSettingsEditorView: View {
                     BasicChatSettings(chat: $draft)
                     
                 case .prediction:
-                    PredictionSettingsSectionView(settings: $draft.settings.prediction)
+                    PredictionSettingsSection(settings: $draft.settings.prediction)
                     
                 case .prompt:
-                    PromptSettingsSectionView(settings: $draft.settings.prompt)
+                    PromptSettingsSection(settings: $draft.settings.prompt)
                     
                 case .sampling:
-                    SamplingSettingsSectionView(settings: $draft.settings.sampling)
+                    SamplingSettingsSection(settings: $draft.settings.sampling)
                     
                 case .rag:
                     RagSettingsSection(chat: $draft)

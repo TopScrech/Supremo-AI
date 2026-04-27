@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PredictionSettingsSectionView: View {
+struct PredictionSettingsSection: View {
     @Binding var settings: PredictionSettings
     
     var body: some View {

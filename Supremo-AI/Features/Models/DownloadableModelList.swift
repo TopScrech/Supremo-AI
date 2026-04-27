@@ -5,7 +5,7 @@ struct DownloadableModelList: View {
     
     var body: some View {
         List {
-            DownloadStorageSummaryView()
+            DownloadStorageSummary()
             
             Text("When the first model finishes, it is assigned to the current chat automatically")
             
