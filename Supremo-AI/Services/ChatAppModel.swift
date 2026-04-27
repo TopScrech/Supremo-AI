@@ -20,6 +20,7 @@ final class ChatAppModel {
     private let inferenceEngine: LocalInferenceEngine = SwiftLlamaInferenceEngine()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "ChatAppModel")
     private var refreshingDownloadSizes = Set<String>()
+    private var generationTask: Task<Void, Never>?
     private var typingTask: Task<Void, Never>?
 
     var isInferenceBackendAvailable: Bool {
@@ -261,6 +262,29 @@ final class ChatAppModel {
     }
 
     func sendPrompt(_ prompt: String, useRAG: Bool) async {
+        if let generationTask {
+            generationTask.cancel()
+            await generationTask.value
+            self.generationTask = nil
+        }
+
+        let task = Task {
+            await runPrompt(prompt, useRAG: useRAG)
+        }
+
+        generationTask = task
+        await task.value
+        generationTask = nil
+    }
+
+    func stopGenerating() {
+        generationTask?.cancel()
+        isGenerating = false
+        startTypingTaskIfNeeded()
+        persistStatus()
+    }
+
+    private func runPrompt(_ prompt: String, useRAG: Bool) async {
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPrompt.isEmpty, let chatIndex = currentChatIndex else { return }
         guard isModelReady(for: chats[chatIndex]) else {
@@ -277,6 +301,11 @@ final class ChatAppModel {
         chats[chatIndex].updatedAt = Date()
         isGenerating = true
         persistStatus()
+        defer {
+            isGenerating = false
+            startTypingTaskIfNeeded()
+            persistStatus()
+        }
 
         let chatSnapshot = chats[chatIndex]
         var generationChat = chatSnapshot
@@ -299,18 +328,19 @@ final class ChatAppModel {
 
             let responseStream = try await inferenceEngine.responseStream(for: trimmedPrompt, chat: generationChat, context: ragContext)
             for try await partialResponse in responseStream {
+                try Task.checkCancellation()
                 updateMessageTarget(assistantMessage.id, in: chatSnapshot.id, text: partialResponse)
             }
 
             updateChatTimestamp(chatSnapshot.id)
             logger.info("Generated streaming response")
+        } catch is CancellationError {
+            updateChatTimestamp(chatSnapshot.id)
+            logger.info("Stopped streaming response")
         } catch {
             updateLatestAssistantMessage(in: chatSnapshot.id, fallbackText: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
-
-        isGenerating = false
-        persistStatus()
     }
 
     private func updateMessageTarget(_ messageID: UUID, in chatID: UUID, text: String) {

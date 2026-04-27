@@ -82,18 +82,26 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
         )
 
         return AsyncThrowingStream { continuation in
-            Task {
+            let task = Task {
                 var rawOutput = ""
                 do {
                     for try await delta in rawStream {
+                        try Task.checkCancellation()
                         rawOutput += delta
                         continuation.yield(cleanedSwiftLlamaOutput(rawOutput))
                     }
                     logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
                     continuation.finish()
+                } catch is CancellationError {
+                    logger.info("Cancelled SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
+                    continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
                 }
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }

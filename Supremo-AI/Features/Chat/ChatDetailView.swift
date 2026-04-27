@@ -1,4 +1,5 @@
 import SwiftUI
+import ChitChat
 
 struct ChatDetailView: View {
     @Environment(ChatAppModel.self) private var appModel
@@ -12,6 +13,8 @@ struct ChatDetailView: View {
     let chat: ChatConfiguration
     
     var body: some View {
+        @Bindable var appModel = appModel
+        
         VStack {
             if !appModel.isModelReady(for: chat) {
                 MissingModelView(
@@ -65,8 +68,10 @@ struct ChatDetailView: View {
                 }
             }
             
-            ChatInputBar(prompt: $prompt, isGenerating: appModel.isGenerating, sendAction: sendPrompt)
-                .padding()
+            let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
+            
+            ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, sendPrompt: sendPrompt, stopAction: stopAction)
+                .animation(.default, value: appModel.isGenerating)
                 .disabled(!appModel.canRunChat(chat))
         }
         .navigationTitle(chat.title)
