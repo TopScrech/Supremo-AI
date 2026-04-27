@@ -51,13 +51,14 @@ struct ModelsView: View {
             }
             .foregroundStyle(.foreground)
             
-            Picker("Sort by", selection: $sortOrder) {
-                ForEach(ModelSortOrder.allCases) {
-                    Text($0.label)
-                        .tag($0)
+            if !appModel.modelFiles.isEmpty {
+                Picker("Sort by", selection: $sortOrder) {
+                    ForEach(ModelSortOrder.allCases) {
+                        Text($0.label)
+                            .tag($0)
+                    }
                 }
             }
-            .disabled(appModel.modelFiles.isEmpty)
             
             Section {
                 if appModel.modelFiles.isEmpty {
