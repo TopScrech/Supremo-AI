@@ -2,7 +2,9 @@ import SwiftUI
 
 struct ChatListView: View {
     @Environment(ChatAppModel.self) private var appModel
+    
     @Binding var showSettings: Bool
+    
     @State private var isRenamePresented = false
     @State private var renameTitle = ""
     @State private var chatToRename: ChatConfiguration?
@@ -58,9 +60,7 @@ struct ChatListView: View {
             ToolbarSpacer(.fixed, placement: .bottomBar)
             
             ToolbarItem(placement: .bottomBar) {
-                Button("New Chat", systemImage: "plus") {
-                    appModel.createChat()
-                }
+                Button("New Chat", systemImage: "plus", action: appModel.createChat)
             }
 #endif
         }
