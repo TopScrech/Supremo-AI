@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 import ChitChat
 
 struct ChatDetailView: View {
@@ -102,12 +102,12 @@ struct ChatDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSettings) {
+        .sheet($showSettings) {
             NavigationStack {
                 ChatSettingsEditor(chat: chat)
             }
         }
-        .sheet(isPresented: $showModelInstall) {
+        .sheet($showModelInstall) {
             NavigationStack {
                 ModelInstallView()
             }

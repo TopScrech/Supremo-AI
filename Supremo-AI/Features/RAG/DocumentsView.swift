@@ -1,11 +1,13 @@
-import SwiftUI
+import ScrechKit
 import UniformTypeIdentifiers
 
 struct DocumentsView: View {
     @Environment(ChatAppModel.self) private var appModel
+    
+    let chat: ChatConfiguration
+    
     @State private var showNewDocument = false
     @State private var showImporter = false
-    let chat: ChatConfiguration
     
     var body: some View {
         Section("Documents for RAG") {
@@ -30,7 +32,7 @@ struct DocumentsView: View {
                 showImporter = true
             }
         }
-        .sheet(isPresented: $showNewDocument) {
+        .sheet($showNewDocument) {
             NavigationStack {
                 NewDocumentView(chat: chat)
             }
