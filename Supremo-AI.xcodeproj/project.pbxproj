@@ -14,7 +14,7 @@
 
 /* Begin PBXFileReference section */
 		F397FB182F9C8958000EBB14 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
-		F397FFCA2F9D7A92000EBB14 /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
+		F397FFCA2F9D7A92000EBB14 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F3AA4F242F9BCECF00BCE00A /* Supremo-AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Supremo-AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -41,7 +41,7 @@
 		F3AA4F1B2F9BCECF00BCE00A = {
 			isa = PBXGroup;
 			children = (
-				F397FFCA2F9D7A92000EBB14 /* README.txt */,
+				F397FFCA2F9D7A92000EBB14 /* README.md */,
 				F3AA4F262F9BCECF00BCE00A /* Supremo-AI */,
 				F397FB182F9C8958000EBB14 /* LICENSE.txt */,
 				F3AA4F252F9BCECF00BCE00A /* Products */,
