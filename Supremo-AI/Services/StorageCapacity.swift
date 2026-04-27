@@ -1,6 +1,4 @@
 import Foundation
-import Metal
-import os
 
 enum StorageCapacity {
     static var availableForImportantUsage: Int64? {
