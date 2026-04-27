@@ -15,7 +15,7 @@ struct DocumentsView: View {
                 ContentUnavailableView("No Documents", systemImage: "doc.text.magnifyingglass", description: Text("Add text documents to make RAG answers available"))
             } else {
                 ForEach(chat.documents) { document in
-                    RAGDocumentCard(document: document)
+                    RAGDocumentCard(document)
                         .swipeActions {
                             Button("Delete", systemImage: "trash", role: .destructive) {
                                 appModel.removeDocument(document, from: chat)

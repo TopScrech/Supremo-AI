@@ -6,11 +6,13 @@ struct ChatDetailView: View {
     
     @Binding var selectedSettingsScreen: SettingsScreen
     @Binding var showAppSettings: Bool
+    let chat: ChatConfiguration
+    
+    @FocusState private var isComposerFocused: Bool
     
     @State private var prompt = ""
     @State private var showSettings = false
     @State private var showModelInstall = false
-    let chat: ChatConfiguration
     
     var body: some View {
         @Bindable var appModel = appModel
@@ -70,7 +72,7 @@ struct ChatDetailView: View {
             
             let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
             
-            ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, sendPrompt: sendPrompt, stopAction: stopAction)
+            ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
                 .animation(.default, value: appModel.isGenerating)
                 .disabled(!appModel.canRunChat(chat))
         }
@@ -126,6 +128,11 @@ struct ChatDetailView: View {
     private func initializeModel() {
         Task {
             await appModel.initializeModel(for: chat)
+            
+            if appModel.isModelInitialized(for: chat) {
+                await Task.yield()
+                isComposerFocused = true
+            }
         }
     }
     
