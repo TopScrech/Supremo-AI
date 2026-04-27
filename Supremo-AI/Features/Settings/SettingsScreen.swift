@@ -1,12 +1,13 @@
 import Foundation
 
 enum SettingsScreen: String, CaseIterable, Identifiable {
-    case models, downloads, shortcuts, fineTune
+    case general, models, downloads, shortcuts, fineTune
     
     var id: String { rawValue }
     
     var label: String {
         switch self {
+        case .general: "General"
         case .models: "Models"
         case .downloads: "Downloads"
         case .shortcuts: "Shortcuts"
@@ -16,6 +17,7 @@ enum SettingsScreen: String, CaseIterable, Identifiable {
     
     var systemImage: String {
         switch self {
+        case .general: "gearshape"
         case .models: "shippingbox"
         case .downloads: "arrow.down.circle"
         case .shortcuts: "sparkles"

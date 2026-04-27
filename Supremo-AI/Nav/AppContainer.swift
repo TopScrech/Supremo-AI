@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppContainer: View {
     @Environment(ChatAppModel.self) private var appModel
+    @AppStorage("disableStatusBar") private var disableStatusBar = false
     
     @State private var selectedSettingsScreen = SettingsScreen.models
     @State private var showSettings = false
@@ -36,6 +37,18 @@ struct AppContainer: View {
                 appModel.load()
             }
         }
+        .appStatusBarHidden(disableStatusBar)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func appStatusBarHidden(_ hidden: Bool) -> some View {
+#if os(iOS)
+        statusBarHidden(hidden)
+#else
+        self
+#endif
     }
 }
 
