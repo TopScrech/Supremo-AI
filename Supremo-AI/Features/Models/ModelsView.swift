@@ -78,7 +78,6 @@ struct ModelsView: View {
                 }
             }
         }
-        .navigationTitle("Models")
         .scrollIndicators(.never)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
             if let url = try? result.get() {

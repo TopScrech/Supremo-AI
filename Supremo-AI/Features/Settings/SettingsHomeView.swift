@@ -28,6 +28,6 @@ struct SettingsHomeView: View {
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle(selectedScreen.label)
     }
 }

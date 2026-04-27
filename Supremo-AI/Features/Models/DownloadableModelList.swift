@@ -17,7 +17,6 @@ struct DownloadableModelList: View {
                 }
             }
         }
-        .navigationTitle("Downloads")
         .task {
             await appModel.refreshDownloadSizes()
         }

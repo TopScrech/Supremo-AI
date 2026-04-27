@@ -22,6 +22,5 @@ struct FineTuneView: View {
                 Text("Fine-tuning controls are staged here to mirror LLMFarm. Training requires the native backend before jobs can run")
             }
         }
-        .navigationTitle("Fine Tune")
     }
 }

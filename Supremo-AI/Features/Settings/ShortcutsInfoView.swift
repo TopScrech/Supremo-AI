@@ -14,6 +14,5 @@ struct ShortcutsInfoView: View {
                 Text("Text chat uses the native SwiftLlama engine")
             }
         }
-        .navigationTitle("Shortcuts")
     }
 }

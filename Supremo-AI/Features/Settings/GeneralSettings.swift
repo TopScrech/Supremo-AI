@@ -9,6 +9,5 @@ struct GeneralSettings: View {
                 Toggle("Disable Status Bar", isOn: $disableStatusBar)
             }
         }
-        .navigationTitle("General")
     }
 }
