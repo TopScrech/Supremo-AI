@@ -14,18 +14,13 @@ struct ModelInitializationView: View {
         } description: {
             Text(description)
         } actions: {
-            VStack {
-                Button(buttonTitle, systemImage: buttonImage, action: initializeAction)
-                    .buttonStyle(.borderedProminent)
+            HStack {
+                Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
+                    .buttonStyle(.glass)
                     .disabled(state == .initializing)
                 
-                if state == .ready {
-                    Button("Eject Model", systemImage: "eject", action: ejectAction)
-                        .buttonStyle(.bordered)
-                }
-                
-                Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
-                    .buttonStyle(.bordered)
+                Button(buttonTitle, systemImage: buttonImage, action: initializeAction)
+                    .buttonStyle(.glassProminent)
                     .disabled(state == .initializing)
             }
         }
