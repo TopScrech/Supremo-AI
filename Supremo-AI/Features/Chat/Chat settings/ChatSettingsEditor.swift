@@ -37,7 +37,7 @@ struct ChatSettingsEditor: View {
                     SamplingSettingsSection(settings: $draft.settings.sampling)
                     
                 case .rag:
-                    RagSettingsSection(chat: $draft)
+                    RAGSettingsSection(chat: $draft)
                 }
             }
         }

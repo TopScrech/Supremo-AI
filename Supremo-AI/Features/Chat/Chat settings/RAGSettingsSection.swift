@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct RagSettingsSection: View {
+struct RAGSettingsSection: View {
     @Binding var chat: ChatConfiguration
     
     var body: some View {
