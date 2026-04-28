@@ -100,8 +100,10 @@ struct DownloadableModelCard: View {
         } message: {
             Text("This repository has been marked as containing sensitive content and may contain potentially harmful and sensitive information")
         }
-        .sheet(item: $versionSelectionModel) {
-            DownloadableModelVersionsSheet($0)
+        .sheet(item: $versionSelectionModel) { model in
+            NavigationStack {
+                DownloadableModelVersionsSheet(model)
+            }
         }
     }
     
