@@ -9,8 +9,15 @@ struct BasicChatSettings: View {
     
     var body: some View {
         Section {
-            TextField("Title", text: $chat.title)
-            TextField("Model name", text: $chat.modelName)
+            HStack {
+                Text("Chat name")
+                
+                TextField("Title", text: $chat.title)
+                    .multilineTextAlignment(.trailing)
+                    .secondary()
+            }
+            
+            LabeledContent("Model", value: chat.modelName)
         }
         
         Section {
