@@ -28,7 +28,7 @@ struct AppContainer: View {
             SettingsHomeView(selectedScreen: $selectedSettingsScreen)
 #else
             NavigationStack {
-                SettingsHomeView(selectedScreen: $selectedSettingsScreen)
+                SettingsHomeView($selectedSettingsScreen)
             }
 #endif
         }

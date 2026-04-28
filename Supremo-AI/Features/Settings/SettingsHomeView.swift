@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct SettingsHomeView: View {
-    @Binding var selectedScreen: SettingsScreen
+    @Binding private var selectedScreen: SettingsScreen
+    
+    init(_ selectedScreen: Binding<SettingsScreen>) {
+        _selectedScreen = selectedScreen
+    }
     
     var body: some View {
 #if os(macOS)
