@@ -29,7 +29,7 @@ struct ChatDetailView: View {
                     }
                 )
             } else if !appModel.isInferenceBackendAvailable {
-                MissingInferenceBackend(chat: chat) {
+                MissingInferenceBackend(chat) {
                     showModelInstall = true
                 }
             } else if !appModel.isModelInitialized(for: chat) {
@@ -38,12 +38,10 @@ struct ChatDetailView: View {
                     state: appModel.modelInitializationState(for: chat),
                     message: appModel.modelInitializationMessages[chat.id],
                     initializeAction: initializeModel,
-                    ejectAction: {
-                        ejectModel()
-                    }, editAction: {
-                        showSettings = true
-                    }
-                )
+                    ejectAction: ejectModel
+                ) {
+                    showSettings = true
+                }
             } else if chat.messages.isEmpty {
                 ContentUnavailableView("Start a Conversation", systemImage: "text.bubble", description: Text(chat.modelName))
             } else {
@@ -90,9 +88,7 @@ struct ChatDetailView: View {
             
             ToolbarItemGroup {
                 if appModel.isModelInitialized(for: chat) {
-                    Button("Eject Model", systemImage: "eject") {
-                        ejectModel()
-                    }
+                    Button("Eject Model", systemImage: "eject", action: ejectModel)
                 }
                 
                 Button("Install Model", systemImage: "arrow.down.circle") {
@@ -106,7 +102,7 @@ struct ChatDetailView: View {
         }
         .sheet($showSettings) {
             NavigationStack {
-                ChatSettingsEditor(chat: chat)
+                ChatSettingsEditor(chat)
             }
         }
         .sheet($showModelInstall) {

@@ -7,7 +7,7 @@ struct ChatSettingsEditor: View {
     @State private var draft: ChatConfiguration
     @State private var section = ChatSettingsSection.basic
     
-    init(chat: ChatConfiguration) {
+    init(_ chat: ChatConfiguration) {
         _draft = State(initialValue: chat)
     }
     

@@ -1,8 +1,13 @@
 import SwiftUI
 
 struct MissingInferenceBackend: View {
-    let chat: ChatConfiguration
-    let installAction: () -> Void
+    private let chat: ChatConfiguration
+    private let installAction: () -> Void
+    
+    init(_ chat: ChatConfiguration, installAction: @escaping () -> Void) {
+        self.chat = chat
+        self.installAction = installAction
+    }
     
     var body: some View {
         ContentUnavailableView {
