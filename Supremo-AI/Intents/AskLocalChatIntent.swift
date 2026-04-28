@@ -7,10 +7,13 @@ struct AskLocalChatIntent: AppIntent {
     
     @Parameter(title: "Prompt")
     var prompt: String
+
+    @Parameter(title: "Model")
+    var model: LocalModelEntity?
     
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let response = try await ShortcutInferenceService().response(prompt: prompt)
+        let response = try await ShortcutInferenceService().response(prompt: prompt, modelID: model?.id)
         return .result(value: response)
     }
 }
