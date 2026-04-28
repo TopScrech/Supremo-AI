@@ -708,6 +708,7 @@ final class ChatAppModel {
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedFileName.localizedStandardContains("baichuan") || lowercasedFileName.localizedStandardContains("nsfw_13b") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mixtral") { return .mixtral }
         if lowercasedFileName.localizedStandardContains("llava") { return .llava }
