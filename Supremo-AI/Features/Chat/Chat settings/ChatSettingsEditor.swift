@@ -15,7 +15,8 @@ struct ChatSettingsEditor: View {
         VStack {
             Picker("Section", selection: $section) {
                 ForEach(ChatSettingsSection.allCases) {
-                    Text($0.label).tag($0)
+                    Text($0.label)
+                        .tag($0)
                 }
             }
             .pickerStyle(.segmented)
