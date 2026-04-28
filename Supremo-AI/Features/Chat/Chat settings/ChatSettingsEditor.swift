@@ -25,7 +25,7 @@ struct ChatSettingsEditor: View {
             Form {
                 switch section {
                 case .basic:
-                    BasicChatSettings(chat: $draft)
+                    BasicChatSettings($draft)
                     
                 case .prediction:
                     PredictionSettingsSection(settings: $draft.settings.prediction)
@@ -41,7 +41,7 @@ struct ChatSettingsEditor: View {
                 }
             }
         }
-        .navigationTitle(draft.title)
+        .navigationTitle(section.label)
         .scrollIndicators(.never)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
