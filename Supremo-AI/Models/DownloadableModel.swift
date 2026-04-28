@@ -42,7 +42,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     }
 
     var supportsVersionSelection: Bool {
-        (familyName.localizedStandardContains("Llama 3.2") || familyName.localizedStandardContains("Gemma 4")) && huggingFaceModelCardURL != nil
+        huggingFaceModelCardURL != nil
     }
 
     var versionSelectionID: String {

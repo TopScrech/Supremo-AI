@@ -135,7 +135,7 @@ final class ChatAppModel {
         }
 
         return metadata.siblings
-            .filter { $0.rfilename.hasSuffix(".gguf") }
+            .filter { isVersionSibling($0.rfilename, for: model.fileName) }
             .compactMap {
                 downloadableModelVersion(from: $0, model: model, modelID: modelID)
             }
@@ -868,15 +868,58 @@ final class ChatAppModel {
         )
     }
 
+    private func isVersionSibling(_ fileName: String, for modelFileName: String) -> Bool {
+        guard fileName.hasSuffix(".gguf") else { return false }
+        let versionPrefix = versionFilePrefix(from: modelFileName)
+        guard !versionPrefix.isEmpty else { return true }
+        return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
+    }
+
+    private func versionFilePrefix(from fileName: String) -> String {
+        let name = URL(filePath: fileName).deletingPathExtension().lastPathComponent
+        let separators: Set<Character> = ["-", "_", "."]
+        let scalars = Array(name)
+
+        for index in scalars.indices.reversed() {
+            guard separators.contains(scalars[index]) else { continue }
+            let suffixStart = scalars.index(after: index)
+            let suffix = String(scalars[suffixStart...])
+            if isQuantizationSuffix(suffix) {
+                return String(scalars[..<index])
+            }
+        }
+
+        return name
+    }
+
+    private func isQuantizationSuffix(_ value: String) -> Bool {
+        let lowercasedValue = value.lowercased()
+        return lowercasedValue == "f16" ||
+            lowercasedValue == "bf16" ||
+            lowercasedValue.hasPrefix("q") ||
+            lowercasedValue.hasPrefix("iq")
+    }
+
+    private func normalizedVersionFileName(_ fileName: String) -> String {
+        fileName.lowercased()
+            .replacing(" ", with: "")
+            .replacing("-", with: "")
+            .replacing("_", with: "")
+            .replacing(".", with: "")
+    }
+
     private func quantization(from fileName: String) -> String {
         let name = URL(filePath: fileName).deletingPathExtension().lastPathComponent
-        
-        if let suffix = name.split(separator: "-").last {
-            return String(suffix)
-        }
-        
-        if let suffix = name.split(separator: ".").last {
-            return String(suffix)
+        let separators: Set<Character> = ["-", "_", "."]
+        let scalars = Array(name)
+
+        for index in scalars.indices.reversed() {
+            guard separators.contains(scalars[index]) else { continue }
+            let suffixStart = scalars.index(after: index)
+            let suffix = String(scalars[suffixStart...])
+            if isQuantizationSuffix(suffix) {
+                return suffix
+            }
         }
         
         return "GGUF"
