@@ -4,7 +4,11 @@ import UniformTypeIdentifiers
 struct DocumentsView: View {
     @Environment(ChatAppModel.self) private var appModel
     
-    let chat: ChatConfiguration
+    private let chat: ChatConfiguration
+    
+    init(_ chat: ChatConfiguration) {
+        self.chat = chat
+    }
     
     @State private var showNewDocument = false
     @State private var showImporter = false
