@@ -265,6 +265,32 @@ final class ChatAppModel {
         persistStatus()
     }
     
+    func deleteAllModels() {
+        let deletedModelIDs = Set(modelFiles.map(\.id))
+        
+        for localURL in Set(modelFiles.compactMap(\.localURL)) where FileManager.default.fileExists(atPath: localURL.path()) {
+            try? FileManager.default.removeItem(at: localURL)
+        }
+        
+        for model in modelFiles {
+            downloadStates[model.fileName] = nil
+            downloadStates[completeFileName(forPartialDownload: model)] = nil
+        }
+        
+        modelFiles.removeAll()
+        
+        for index in chats.indices {
+            guard let modelFileID = chats[index].modelFileID, deletedModelIDs.contains(modelFileID) else { continue }
+            
+            chats[index].modelFileID = nil
+            chats[index].modelName = "No model selected"
+            chats[index].updatedAt = Date()
+        }
+        
+        logger.info("Deleted all local models")
+        persistStatus()
+    }
+    
     func clearMessages(in chat: ChatConfiguration) {
         guard let index = chats.firstIndex(where: { $0.id == chat.id }) else { return }
         typingTask?.cancel()

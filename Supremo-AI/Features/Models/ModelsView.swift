@@ -5,6 +5,7 @@ struct ModelsView: View {
     @Environment(ChatAppModel.self) private var appModel
     
     @State private var showImporter = false
+    @State private var isDeleteAllPresented = false
     @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
     
     private var sortedModels: [ModelFile] {
@@ -74,9 +75,18 @@ struct ModelsView: View {
                     
                     Spacer()
                     
-                    Text("Total: \(appModel.localModelsSizeDescription)")
-                        .secondary()
+                    if !appModel.modelFiles.isEmpty {
+                        Text("Total: \(appModel.localModelsSizeDescription)")
+                            .secondary()
+                    }
                 }
+            }
+            
+            if !appModel.modelFiles.isEmpty {
+                Button("Delete all", systemImage: "trash", role: .destructive) {
+                    isDeleteAllPresented = true
+                }
+                .foregroundStyle(.red)
             }
         }
         .scrollIndicators(.never)
@@ -84,6 +94,11 @@ struct ModelsView: View {
             if let url = try? result.get() {
                 appModel.importModel(from: url)
             }
+        }
+        .alert("Delete all local models?", isPresented: $isDeleteAllPresented) {
+            Button("Delete all", systemImage: "trash", role: .destructive, action: appModel.deleteAllModels)
+        } message: {
+            Text("This removes every local model file and clears model selection from chats")
         }
     }
     
