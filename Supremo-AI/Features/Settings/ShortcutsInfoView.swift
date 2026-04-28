@@ -4,9 +4,8 @@ struct ShortcutsInfoView: View {
     var body: some View {
         List {
             Section("Available Actions") {
-                Label("Ask a local chat", systemImage: "questionmark.bubble")
-                Label("Summarize text with a selected chat", systemImage: "text.badge.checkmark")
-                Label("Query RAG documents", systemImage: "doc.text.magnifyingglass")
+                Label("Ask local LLM", systemImage: "questionmark.bubble")
+                Label("Summarize text", systemImage: "text.badge.checkmark")
             }
         }
     }
