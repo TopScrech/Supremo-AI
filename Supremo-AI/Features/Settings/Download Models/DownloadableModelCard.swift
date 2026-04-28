@@ -75,7 +75,11 @@ struct DownloadableModelCard: View {
             }
         }
         .contextMenu {
-            Button("Copy Download Link", systemImage: "link", action: copyDownloadLink)
+            Button("Copy download link", systemImage: "link", action: copyDownloadLink)
+            
+            if model.huggingFaceModelCardURL != nil {
+                Button("Copy model card link", systemImage: "link", action: copyHuggingFaceModelCardLink)
+            }
         }
         .alert("Not for all audiences", isPresented: $isNotForAllAudiencesAlertPresented) {
             Button("Cancel", role: .cancel) {}
@@ -108,11 +112,21 @@ struct DownloadableModelCard: View {
     }
 
     private func copyDownloadLink() {
+        copy(model.url.absoluteString)
+    }
+    
+    private func copyHuggingFaceModelCardLink() {
+        guard let url = model.huggingFaceModelCardURL else { return }
+        
+        copy(url.absoluteString)
+    }
+    
+    private func copy(_ text: String) {
 #if os(iOS) || os(visionOS)
-        UIPasteboard.general.string = model.url.absoluteString
+        UIPasteboard.general.string = text
 #elseif os(macOS)
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(model.url.absoluteString, forType: .string)
+        NSPasteboard.general.setString(text, forType: .string)
 #endif
     }
 }

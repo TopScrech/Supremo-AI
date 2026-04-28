@@ -16,6 +16,15 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
             "-"
         }
     }
+    
+    var huggingFaceModelCardURL: URL? {
+        guard url.host == "huggingface.co" else { return nil }
+        
+        let pathComponents = url.pathComponents
+        guard pathComponents.count >= 3 else { return nil }
+        
+        return URL(string: "https://huggingface.co/\(pathComponents[1])/\(pathComponents[2])")
+    }
 
     var familyDisplayName: String {
         let name = familyName.lowercased()
