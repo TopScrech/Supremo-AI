@@ -40,4 +40,8 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         default: return familyName
         }
     }
+
+    var supportsVersionSelection: Bool {
+        familyName.localizedStandardContains("Llama 3.2") && huggingFaceModelCardURL != nil
+    }
 }

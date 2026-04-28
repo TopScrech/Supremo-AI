@@ -71,7 +71,7 @@ final class ChatAppModel {
     }
     
     func downloadCapacityErrorMessage(for model: DownloadableModel) -> String? {
-        downloadCapacityErrorMessages[model.fileName]
+        downloadCapacityErrorMessages[model.fileName] ?? resolvedDownloadCapacityErrorMessage(for: model)
     }
     
     func downloadStateEntry(for fileName: String) -> DownloadStateEntry {
@@ -121,6 +121,34 @@ final class ChatAppModel {
             logger.error("Unable to fetch metadata for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
             return false
         }
+    }
+
+    func downloadableVersions(for model: DownloadableModel) async throws -> [DownloadableModel] {
+        let metadata = try await huggingFaceModelMetadata(for: model)
+        guard let modelID = huggingFaceModelID(from: model.url) else {
+            throw URLError(.unsupportedURL)
+        }
+
+        return metadata.siblings
+            .filter { $0.rfilename.hasSuffix(".gguf") }
+            .compactMap {
+                downloadableModelVersion(from: $0, model: model, modelID: modelID)
+            }
+            .sorted {
+                switch ($0.sizeBytes, $1.sizeBytes) {
+                case let (lhs?, rhs?) where lhs != rhs:
+                    return lhs < rhs
+                    
+                case (nil, _?):
+                    return false
+                    
+                case (_?, nil):
+                    return true
+                    
+                default:
+                    return $0.fileName.localizedStandardCompare($1.fileName) == .orderedAscending
+                }
+            }
     }
     
     func load() {
@@ -803,7 +831,7 @@ final class ChatAppModel {
             return metadata
         }
         
-        guard let url = URL(string: "https://huggingface.co/api/models/\(modelID)") else {
+        guard let url = URL(string: "https://huggingface.co/api/models/\(modelID)?blobs=true") else {
             throw URLError(.badURL)
         }
         
@@ -816,6 +844,37 @@ final class ChatAppModel {
         let metadata = try JSONDecoder().decode(HuggingFaceModelMetadata.self, from: data)
         huggingFaceMetadataCache[modelID] = metadata
         return metadata
+    }
+
+    private func downloadableModelVersion(from sibling: HuggingFaceModelSibling, model: DownloadableModel, modelID: String) -> DownloadableModel? {
+        guard let repositoryURL = URL(string: "https://huggingface.co/\(modelID)/resolve/main") else { return nil }
+        
+        let url = repositoryURL.appending(path: sibling.rfilename).appending(queryItems: [
+            URLQueryItem(name: "download", value: "true")
+        ])
+
+        return DownloadableModel(
+            familyName: model.familyName,
+            fileName: sibling.rfilename,
+            url: url,
+            quantization: quantization(from: sibling.rfilename),
+            sizeBytes: sibling.resolvedSizeBytes,
+            inference: model.inference
+        )
+    }
+
+    private func quantization(from fileName: String) -> String {
+        let name = URL(filePath: fileName).deletingPathExtension().lastPathComponent
+        
+        if let suffix = name.split(separator: "-").last {
+            return String(suffix)
+        }
+        
+        if let suffix = name.split(separator: ".").last {
+            return String(suffix)
+        }
+        
+        return "GGUF"
     }
     
     private func metadataEnrichedModel(_ model: ModelFile) async -> ModelFile {
@@ -948,6 +1007,7 @@ private struct HuggingFaceModelMetadata: Decodable {
     var tags: [String]
     var gguf: HuggingFaceGGUFMetadata?
     var cardData: HuggingFaceModelCardData?
+    var siblings: [HuggingFaceModelSibling]
     
     nonisolated var inferenceKind: InferenceKind? {
         let values = [
@@ -961,7 +1021,7 @@ private struct HuggingFaceModelMetadata: Decodable {
     }
     
     private enum CodingKeys: String, CodingKey {
-        case tags, gguf, cardData
+        case tags, gguf, cardData, siblings
     }
     
     init(from decoder: Decoder) throws {
@@ -969,6 +1029,7 @@ private struct HuggingFaceModelMetadata: Decodable {
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         gguf = try container.decodeIfPresent(HuggingFaceGGUFMetadata.self, forKey: .gguf)
         cardData = try container.decodeIfPresent(HuggingFaceModelCardData.self, forKey: .cardData)
+        siblings = try container.decodeIfPresent([HuggingFaceModelSibling].self, forKey: .siblings) ?? []
     }
     
     nonisolated private static func inferenceKind(from value: String) -> InferenceKind? {
@@ -987,6 +1048,20 @@ private struct HuggingFaceModelMetadata: Decodable {
         if lowercasedValue.localizedStandardContains("llama") { return .llama }
         return nil
     }
+}
+
+private struct HuggingFaceModelSibling: Decodable {
+    var rfilename: String
+    var size: Int?
+    var lfs: HuggingFaceModelSiblingLFS?
+
+    var resolvedSizeBytes: Int? {
+        size ?? lfs?.size
+    }
+}
+
+private struct HuggingFaceModelSiblingLFS: Decodable {
+    var size: Int?
 }
 
 private struct HuggingFaceGGUFMetadata: Decodable {

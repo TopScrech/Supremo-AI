@@ -4,6 +4,7 @@ struct DownloadableModelCard: View {
     @Environment(ChatAppModel.self) private var appModel
     @State private var isNotForAllAudiencesAlertPresented = false
     @State private var isCheckingNotForAllAudiences = false
+    @State private var versionSelectionModel: DownloadableModel?
     
     private let model: DownloadableModel
     
@@ -26,13 +27,20 @@ struct DownloadableModelCard: View {
                     Text(model.familyName)
                         .headline()
                     
-                    HStack {
-                        Label(model.quantization, systemImage: "tag")
-                        Label(model.displaySize, systemImage: "externaldrive")
+                    if model.supportsVersionSelection {
+                        Label("Choose version", systemImage: "square.stack.3d.up")
+                            .labelIconToTitleSpacing(2)
+                            .caption()
+                            .foregroundStyle(.tertiary)
+                    } else {
+                        HStack {
+                            Label(model.quantization, systemImage: "tag")
+                            Label(model.displaySize, systemImage: "externaldrive")
+                        }
+                        .labelIconToTitleSpacing(2)
+                        .caption()
+                        .foregroundStyle(.tertiary)
                     }
-                    .labelIconToTitleSpacing(2)
-                    .caption()
-                    .foregroundStyle(.tertiary)
                 }
                 
                 if let downloadState, downloadState.isDownloading {
@@ -48,7 +56,7 @@ struct DownloadableModelCard: View {
                         .caption()
                         .foregroundStyle(.red)
                     
-                } else if let capacityErrorMessage {
+                } else if let capacityErrorMessage, !model.supportsVersionSelection {
                     Text(capacityErrorMessage)
                         .caption()
                         .foregroundStyle(.red)
@@ -67,9 +75,13 @@ struct DownloadableModelCard: View {
                 
             } else if downloadState?.isDownloading != true {
                 SFButton("arrow.down") {
-                    prepareDownload()
+                    if model.supportsVersionSelection {
+                        versionSelectionModel = model
+                    } else {
+                        prepareDownload()
+                    }
                 }
-                .disabled(capacityErrorMessage != nil || isCheckingNotForAllAudiences)
+                .disabled((capacityErrorMessage != nil && !model.supportsVersionSelection) || isCheckingNotForAllAudiences)
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.circle)
             }
@@ -87,6 +99,9 @@ struct DownloadableModelCard: View {
             Button("Download", action: startDownload)
         } message: {
             Text("This repository has been marked as containing sensitive content and may contain potentially harmful and sensitive information")
+        }
+        .sheet(item: $versionSelectionModel) {
+            DownloadableModelVersionsSheet($0)
         }
     }
     
