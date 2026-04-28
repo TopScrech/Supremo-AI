@@ -18,12 +18,12 @@ struct ModelCatalog {
         model(familyName: "Bunny 1.0 4B", fileName: "Bunny-v1_0-4B-Q4_K_S.gguf", urlString: "https://huggingface.co/guinmoon/Bunny-v1_0-4B-GGUF/resolve/main/Bunny-v1_0-4B-Q4_K_S.gguf?download=true", quantization: "Q4_K_S", inference: .llava),
         model(familyName: "Moondream 2", fileName: "moondream2-text-model-f16.gguf", urlString: "https://huggingface.co/moondream/moondream2-gguf/resolve/main/moondream2-text-model-f16.gguf?download=true", quantization: "F16", inference: .moondream)
     ]
-
+    
     private static func model(familyName: String, fileName: String, urlString: String, quantization: String, inference: InferenceKind) -> DownloadableModel {
         guard let url = URL(string: urlString) else {
             preconditionFailure("Invalid model URL")
         }
-
+        
         return DownloadableModel(familyName: familyName, fileName: fileName, url: url, quantization: quantization, sizeBytes: nil, inference: inference)
     }
 }

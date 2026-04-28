@@ -7,29 +7,29 @@ import BackgroundTasks
 final class BackgroundModelDownloadScheduler {
     static let shared = BackgroundModelDownloadScheduler()
     static let taskIdentifierPrefix = "\(Bundle.main.bundleIdentifier ?? "dev.topscrech.Supremo-AI").model-download."
-
+    
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Supremo-AI", category: "BackgroundModelDownloadScheduler")
-
+    
     private init() {}
-
+    
     func schedule(
         title: String,
         subtitle: String,
         handler: @escaping @MainActor @Sendable (Progress) async -> Bool
     ) {
-        guard #available(iOS 26.0, *) else {
+        guard #available(iOS 26, *) else {
             Task { @MainActor in
                 _ = await handler(Progress(totalUnitCount: 1))
             }
             return
         }
-
+        
         let taskID = Self.taskIdentifierPrefix + UUID().uuidString
         registerContinuedProcessingTask(taskID: taskID, handler: handler)
         submitContinuedProcessingTask(taskID: taskID, title: title, subtitle: subtitle)
     }
-
-    @available(iOS 26.0, *)
+    
+    @available(iOS 26, *)
     private func registerContinuedProcessingTask(
         taskID: String,
         handler: @escaping @MainActor @Sendable (Progress) async -> Bool
@@ -39,27 +39,27 @@ final class BackgroundModelDownloadScheduler {
                 task.setTaskCompleted(success: false)
                 return
             }
-
+            
             let work = Task { @MainActor in
                 let success = await handler(task.progress)
                 task.setTaskCompleted(success: success)
                 self.logger.info("Completed model download continued processing: \(success)")
             }
-
+            
             task.expirationHandler = {
                 work.cancel()
             }
         }
-
+        
         if !didRegister {
             logger.error("Failed to register model download continued processing task")
         }
     }
-
-    @available(iOS 26.0, *)
+    
+    @available(iOS 26, *)
     private func submitContinuedProcessingTask(taskID: String, title: String, subtitle: String) {
         let request = BGContinuedProcessingTaskRequest(identifier: taskID, title: title, subtitle: subtitle)
-
+        
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
@@ -71,9 +71,9 @@ final class BackgroundModelDownloadScheduler {
 final class BackgroundModelDownloadScheduler {
     static let shared = BackgroundModelDownloadScheduler()
     static let taskIdentifierPrefix = "dev.topscrech.Supremo-AI.model-download."
-
+    
     private init() {}
-
+    
     func schedule(
         title: String,
         subtitle: String,

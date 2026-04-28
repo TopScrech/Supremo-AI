@@ -547,7 +547,7 @@ final class ChatAppModel {
     
     func download(_ model: DownloadableModel) async {
 #if os(iOS)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26, *) {
             startContinuedProcessingDownload(model)
             return
         }
