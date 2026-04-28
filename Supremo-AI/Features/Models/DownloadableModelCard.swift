@@ -2,6 +2,8 @@ import ScrechKit
 
 struct DownloadableModelCard: View {
     @Environment(ChatAppModel.self) private var appModel
+    @State private var isNotForAllAudiencesAlertPresented = false
+    @State private var isCheckingNotForAllAudiences = false
     
     private let model: DownloadableModel
     
@@ -65,17 +67,43 @@ struct DownloadableModelCard: View {
                 
             } else if downloadState?.isDownloading != true {
                 SFButton("arrow.down") {
-                    Task {
-                        await appModel.download(model)
-                    }
+                    prepareDownload()
                 }
-                .disabled(capacityErrorMessage != nil)
+                .disabled(capacityErrorMessage != nil || isCheckingNotForAllAudiences)
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.circle)
             }
         }
         .contextMenu {
             Button("Copy Download Link", systemImage: "link", action: copyDownloadLink)
+        }
+        .alert("Not for all audiences", isPresented: $isNotForAllAudiencesAlertPresented) {
+            Button("Cancel", role: .cancel) {}
+            Button("Download", action: startDownload)
+        } message: {
+            Text("This repository has been marked as containing sensitive content and may contain potentially harmful and sensitive information")
+        }
+    }
+
+    private func prepareDownload() {
+        guard !isCheckingNotForAllAudiences else { return }
+
+        isCheckingNotForAllAudiences = true
+        
+        Task {
+            if await appModel.isMarkedNotForAllAudiences(model) {
+                isNotForAllAudiencesAlertPresented = true
+            } else {
+                startDownload()
+            }
+            
+            isCheckingNotForAllAudiences = false
+        }
+    }
+
+    private func startDownload() {
+        Task {
+            await appModel.download(model)
         }
     }
     

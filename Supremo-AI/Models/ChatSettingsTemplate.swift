@@ -33,7 +33,6 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
         ChatSettingsTemplate("Phi", inference: .phi, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "<|user|>\n{prompt}<|end|>\n<|assistant|>"),
         ChatSettingsTemplate("Qwen", inference: .qwen, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"),
         ChatSettingsTemplate("DeepSeek R1", inference: .deepseek, contextLength: 4096, batchSize: 512, temperature: 0.6, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<｜begin▁of▁sentence｜><｜User｜>{prompt}<｜Assistant｜>"),
-        ChatSettingsTemplate("Baichuan", inference: .baichuan, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: "System: A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.\nHuman: {prompt}\nAssistant:\n"),
         ChatSettingsTemplate("Bunny", inference: .llava, contextLength: 4096, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\n{prompt} ASSISTANT:"),
         ChatSettingsTemplate("Moondream 2", inference: .moondream, contextLength: 2048, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:")
         // ChatSettingsTemplate("ChatML", inference: .llama, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant")
@@ -41,6 +40,10 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
 
     static func automaticTemplate(for model: ModelFile) -> ChatSettingsTemplate? {
         let modelName = model.displayName
+
+        if let promptTemplate = model.promptTemplate {
+            return ChatSettingsTemplate("Dynamic Template", inference: model.family, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: promptTemplate)
+        }
 
         if modelName.localizedStandardContains("gemma 4") || modelName.localizedStandardContains("gemma-4") {
             return builtIns.first { $0.name == "Gemma 4" }
@@ -64,10 +67,6 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
 
         if modelName.localizedStandardContains("qwen") {
             return builtIns.first { $0.name == "Qwen" }
-        }
-
-        if modelName.localizedStandardContains("baichuan") || modelName.localizedStandardContains("nsfw 13b") || modelName.localizedStandardContains("nsfw_13b") {
-            return builtIns.first { $0.name == "Baichuan" }
         }
 
         if modelName.localizedStandardContains("bunny") {

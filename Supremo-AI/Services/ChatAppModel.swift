@@ -20,6 +20,7 @@ final class ChatAppModel {
     private let inferenceEngine: LocalInferenceEngine = SwiftLlamaInferenceEngine()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "ChatAppModel")
     private var refreshingDownloadSizes = Set<String>()
+    private var huggingFaceMetadataCache: [String: HuggingFaceModelMetadata] = [:]
     private var generationTask: Task<Void, Never>?
     private var typingTask: Task<Void, Never>?
 
@@ -92,6 +93,17 @@ final class ChatAppModel {
     func refreshDownloadSizes() async {
         for model in downloadableModels where model.sizeBytes == nil {
             await refreshDownloadSize(for: model)
+        }
+    }
+
+    func isMarkedNotForAllAudiences(_ model: DownloadableModel) async -> Bool {
+        do {
+            let metadata = try await huggingFaceModelMetadata(for: model)
+            let tags = metadata.tags + (metadata.cardData?.tags ?? [])
+            return tags.contains("not-for-all-audiences")
+        } catch {
+            logger.error("Unable to fetch metadata for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 
@@ -220,12 +232,13 @@ final class ChatAppModel {
         logger.info("Ejected model \(chat.modelName, privacy: .public)")
     }
 
-    func assignModel(_ model: ModelFile, to chat: ChatConfiguration) {
+    func assignModel(_ model: ModelFile, to chat: ChatConfiguration) async {
         guard model.isAvailableLocally else {
             logger.info("Finish downloading \(model.fileName, privacy: .public) before using it")
             return
         }
 
+        let model = await metadataEnrichedModel(model)
         var updated = chat
         updated.modelFileID = model.id
         updated.modelName = model.displayName
@@ -501,7 +514,9 @@ final class ChatAppModel {
             let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: "Local", family: .llama)
             modelFiles.append(model)
             if let selectedChat, selectedChat.modelFileID == nil {
-                assignModel(model, to: selectedChat)
+                Task {
+                    await assignModel(model, to: selectedChat)
+                }
             }
             logger.info("Imported \(model.fileName, privacy: .public)")
             persistStatus()
@@ -510,12 +525,21 @@ final class ChatAppModel {
         }
     }
 
-    func registerDownloadedModel(_ downloadableModel: DownloadableModel, localURL: URL) {
+    func registerDownloadedModel(_ downloadableModel: DownloadableModel, localURL: URL) async {
+        let metadata = try? await huggingFaceModelMetadata(for: downloadableModel)
         modelFiles.removeAll { $0.fileName == downloadableModel.fileName || $0.fileName == "\(downloadableModel.fileName).download" }
-        let model = ModelFile(displayName: downloadableModel.familyName, fileName: downloadableModel.fileName, localURL: localURL, remoteURL: downloadableModel.url, quantization: downloadableModel.quantization, family: downloadableModel.inference)
+        let model = ModelFile(
+            displayName: downloadableModel.familyName,
+            fileName: downloadableModel.fileName,
+            localURL: localURL,
+            remoteURL: downloadableModel.url,
+            quantization: downloadableModel.quantization,
+            family: metadata?.inferenceKind ?? downloadableModel.inference,
+            promptTemplate: metadata?.cardData?.promptTemplate
+        )
         modelFiles.append(model)
         if let selectedChat, selectedChat.modelFileID == nil {
-            assignModel(model, to: selectedChat)
+            await assignModel(model, to: selectedChat)
         }
         logger.info("Added \(downloadableModel.fileName, privacy: .public)")
         persistStatus()
@@ -550,7 +574,7 @@ final class ChatAppModel {
             }
             try FileManager.default.moveItem(at: partialDestination, to: destination)
             downloadStates[currentModel.fileName]?.isDownloading = false
-            registerDownloadedModel(currentModel, localURL: destination)
+            await registerDownloadedModel(currentModel, localURL: destination)
         } catch {
             refreshModelFilesFromDisk()
             downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription)
@@ -638,6 +662,66 @@ final class ChatAppModel {
         return Int64(max(sizeBytes - existingBytes, 0))
     }
 
+    private func huggingFaceModelID(from url: URL) -> String? {
+        guard url.host == "huggingface.co" else { return nil }
+
+        let pathComponents = url.pathComponents
+        guard pathComponents.count >= 3 else { return nil }
+
+        return "\(pathComponents[1])/\(pathComponents[2])"
+    }
+
+    private func huggingFaceModelMetadata(for model: DownloadableModel) async throws -> HuggingFaceModelMetadata {
+        try await huggingFaceModelMetadata(for: model.url)
+    }
+
+    private func huggingFaceModelMetadata(for url: URL) async throws -> HuggingFaceModelMetadata {
+        guard let modelID = huggingFaceModelID(from: url) else {
+            throw URLError(.unsupportedURL)
+        }
+
+        return try await huggingFaceModelMetadata(for: modelID)
+    }
+
+    private func huggingFaceModelMetadata(for modelID: String) async throws -> HuggingFaceModelMetadata {
+        if let metadata = huggingFaceMetadataCache[modelID] {
+            return metadata
+        }
+
+        guard let url = URL(string: "https://huggingface.co/api/models/\(modelID)") else {
+            throw URLError(.badURL)
+        }
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse,
+              200..<300 ~= httpResponse.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+
+        let metadata = try JSONDecoder().decode(HuggingFaceModelMetadata.self, from: data)
+        huggingFaceMetadataCache[modelID] = metadata
+        return metadata
+    }
+
+    private func metadataEnrichedModel(_ model: ModelFile) async -> ModelFile {
+        guard let remoteURL = model.remoteURL,
+              let metadata = try? await huggingFaceModelMetadata(for: remoteURL) else {
+            return model
+        }
+
+        var enrichedModel = model
+        enrichedModel.family = metadata.inferenceKind ?? model.family
+        enrichedModel.promptTemplate = metadata.cardData?.promptTemplate ?? model.promptTemplate
+
+        guard let index = modelFiles.firstIndex(where: { $0.id == model.id }) else {
+            return enrichedModel
+        }
+
+        modelFiles[index] = enrichedModel
+        persistStatus()
+        return enrichedModel
+    }
+
     private func fileSize(for url: URL) -> Int {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path()),
               let fileSize = attributes[.size] as? NSNumber else { return 0 }
@@ -708,7 +792,7 @@ final class ChatAppModel {
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
-        if lowercasedFileName.localizedStandardContains("baichuan") || lowercasedFileName.localizedStandardContains("nsfw_13b") { return .baichuan }
+        if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mixtral") { return .mixtral }
         if lowercasedFileName.localizedStandardContains("llava") { return .llava }
@@ -724,6 +808,84 @@ final class ChatAppModel {
         } catch {
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
+    }
+}
+
+private struct HuggingFaceModelMetadata: Decodable {
+    var tags: [String]
+    var gguf: HuggingFaceGGUFMetadata?
+    var cardData: HuggingFaceModelCardData?
+
+    nonisolated var inferenceKind: InferenceKind? {
+        let values = [
+            gguf?.architecture,
+            cardData?.modelType,
+            cardData?.modelName,
+            cardData?.baseModel
+        ] + tags
+
+        return values.compactMap { $0 }.compactMap(Self.inferenceKind).first
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case tags, gguf, cardData
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+        gguf = try container.decodeIfPresent(HuggingFaceGGUFMetadata.self, forKey: .gguf)
+        cardData = try container.decodeIfPresent(HuggingFaceModelCardData.self, forKey: .cardData)
+    }
+
+    nonisolated private static func inferenceKind(from value: String) -> InferenceKind? {
+        let lowercasedValue = value.lowercased()
+        if lowercasedValue.localizedStandardContains("gemma") { return .gemma }
+        if lowercasedValue.localizedStandardContains("deepseek") { return .deepseek }
+        if lowercasedValue.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedValue.localizedStandardContains("baichuan") { return .baichuan }
+        if lowercasedValue.localizedStandardContains("phi") { return .phi }
+        if lowercasedValue.localizedStandardContains("mixtral") { return .mixtral }
+        if lowercasedValue.localizedStandardContains("llava") { return .llava }
+        if lowercasedValue.localizedStandardContains("moondream") { return .moondream }
+        if lowercasedValue.localizedStandardContains("starcoder") { return .starcoder }
+        if lowercasedValue.localizedStandardContains("falcon") { return .falcon }
+        if lowercasedValue.localizedStandardContains("gpt2") || lowercasedValue.localizedStandardContains("gpt-2") { return .gpt2 }
+        if lowercasedValue.localizedStandardContains("llama") { return .llama }
+        return nil
+    }
+}
+
+private struct HuggingFaceGGUFMetadata: Decodable {
+    var architecture: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case architecture
+    }
+}
+
+private struct HuggingFaceModelCardData: Decodable {
+    var tags: [String]
+    var baseModel: String?
+    var modelName: String?
+    var modelType: String?
+    var promptTemplate: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case tags
+        case baseModel = "base_model"
+        case modelName = "model_name"
+        case modelType = "model_type"
+        case promptTemplate = "prompt_template"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+        baseModel = try container.decodeIfPresent(String.self, forKey: .baseModel)
+        modelName = try container.decodeIfPresent(String.self, forKey: .modelName)
+        modelType = try container.decodeIfPresent(String.self, forKey: .modelType)
+        promptTemplate = try container.decodeIfPresent(String.self, forKey: .promptTemplate)
     }
 }
 

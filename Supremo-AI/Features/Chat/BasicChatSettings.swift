@@ -16,6 +16,11 @@ struct BasicChatSettings: View {
             }
             
             Picker("Template", selection: $chat.settings.modelSettingsTemplate) {
+                if !ChatSettingsTemplate.builtIns.contains(where: { $0.name == chat.settings.modelSettingsTemplate }) {
+                    Text(chat.settings.modelSettingsTemplate)
+                        .tag(chat.settings.modelSettingsTemplate)
+                }
+
                 ForEach(ChatSettingsTemplate.builtIns) {
                     Text($0.name)
                         .tag($0.name)

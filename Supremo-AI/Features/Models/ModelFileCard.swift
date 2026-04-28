@@ -66,8 +66,10 @@ struct ModelFileCard: View {
             if model.isAvailableLocally {
                 if let chat = appModel.selectedChat {
                     Button("Select") {
-                        appModel.assignModel(model, to: chat)
-                        dismiss()
+                        Task {
+                            await appModel.assignModel(model, to: chat)
+                            dismiss()
+                        }
                     }
                     .buttonStyle(.glass)
                     .foregroundStyle(.foreground)
