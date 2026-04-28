@@ -6,6 +6,7 @@ struct RemoteFileSizeResolver {
         request.httpMethod = "HEAD"
         
         let (_, response) = try await URLSession.shared.data(for: request)
+        
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<400).contains(httpResponse.statusCode),
               httpResponse.expectedContentLength > 0 else {

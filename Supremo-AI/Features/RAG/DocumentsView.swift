@@ -1,11 +1,17 @@
-import SwiftUI
+import ScrechKit
 import UniformTypeIdentifiers
 
 struct DocumentsView: View {
     @Environment(ChatAppModel.self) private var appModel
+    
+    private let chat: ChatConfiguration
+    
+    init(_ chat: ChatConfiguration) {
+        self.chat = chat
+    }
+    
     @State private var showNewDocument = false
     @State private var showImporter = false
-    let chat: ChatConfiguration
     
     var body: some View {
         Section("Documents for RAG") {
@@ -13,7 +19,7 @@ struct DocumentsView: View {
                 ContentUnavailableView("No Documents", systemImage: "doc.text.magnifyingglass", description: Text("Add text documents to make RAG answers available"))
             } else {
                 ForEach(chat.documents) { document in
-                    RAGDocumentCard(document: document)
+                    RAGDocumentCard(document)
                         .swipeActions {
                             Button("Delete", systemImage: "trash", role: .destructive) {
                                 appModel.removeDocument(document, from: chat)
@@ -30,7 +36,7 @@ struct DocumentsView: View {
                 showImporter = true
             }
         }
-        .sheet(isPresented: $showNewDocument) {
+        .sheet($showNewDocument) {
             NavigationStack {
                 NewDocumentView(chat: chat)
             }

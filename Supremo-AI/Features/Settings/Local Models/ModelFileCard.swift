@@ -7,7 +7,7 @@ struct ModelFileCard: View {
     private let model: ModelFile
     
     private var displaySize: String {
-        if model.isPartialDownload == true, let statusText = appModel.downloadStates[completeFileName]?.statusText {
+        if model.isPartialDownload == true, let statusText = downloadState?.statusText {
             return statusText
         }
         
@@ -27,7 +27,7 @@ struct ModelFileCard: View {
     }
     
     private var downloadState: DownloadState? {
-        appModel.downloadStates[completeFileName]
+        appModel.downloadStateEntry(for: completeFileName).state
     }
     
     init(_ model: ModelFile) {
@@ -66,8 +66,10 @@ struct ModelFileCard: View {
             if model.isAvailableLocally {
                 if let chat = appModel.selectedChat {
                     Button("Select") {
-                        appModel.assignModel(model, to: chat)
-                        dismiss()
+                        Task {
+                            await appModel.assignModel(model, to: chat)
+                            dismiss()
+                        }
                     }
                     .buttonStyle(.glass)
                     .foregroundStyle(.foreground)
@@ -82,6 +84,7 @@ struct ModelFileCard: View {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 appModel.deleteModel(model)
             }
+            .labelStyle(.iconOnly)
         }
         .contextMenu {
             Button("Delete", systemImage: "trash", role: .destructive) {

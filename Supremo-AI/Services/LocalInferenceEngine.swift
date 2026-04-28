@@ -12,7 +12,7 @@ protocol LocalInferenceEngine {
 
 enum InferenceEngineError: LocalizedError {
     case backendUnavailable
-    
+
     var errorDescription: String? {
         switch self {
         case .backendUnavailable:
@@ -25,39 +25,39 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
     let isAvailable = true
     private static let swiftLlamaStore = SwiftLlamaModelStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AI-Chats", category: "LocalInferenceEngine")
-    
+
     func prepare(chat: ChatConfiguration) async throws {
         guard let modelURL = chat.modelFileURL else {
             throw InferenceEngineError.backendUnavailable
         }
-        
+
         try await Self.swiftLlamaStore.prepare(modelPath: modelURL.path(), configuration: swiftLlamaConfiguration(for: chat))
     }
-    
+
     func eject(chat: ChatConfiguration) async {
         guard let modelURL = chat.modelFileURL else { return }
-        
+
         await Self.swiftLlamaStore.eject(modelPath: modelURL.path())
     }
-    
+
     func response(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> String {
         guard let modelURL = chat.modelFileURL else {
             throw InferenceEngineError.backendUnavailable
         }
-        
+
         let input = promptWithRAG(prompt: prompt, context: context)
         return try await swiftLlamaResponse(for: input, chat: chat, modelURL: modelURL)
     }
-    
+
     func responseStream(for prompt: String, chat: ChatConfiguration, context: [RAGDocument]) async throws -> AsyncThrowingStream<String, Error> {
         guard let modelURL = chat.modelFileURL else {
             throw InferenceEngineError.backendUnavailable
         }
-        
+
         let input = promptWithRAG(prompt: prompt, context: context)
         return try await swiftLlamaResponseStream(for: input, chat: chat, modelURL: modelURL)
     }
-    
+
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
@@ -70,7 +70,7 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
         logger.info("Finished SwiftLlama response. outputCharacters=\(rawOutput.count, privacy: .public)")
         return cleanedSwiftLlamaOutput(rawOutput)
     }
-    
+
     private func swiftLlamaResponseStream(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> AsyncThrowingStream<String, Error> {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
@@ -80,24 +80,32 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
             configuration: configuration,
             prompt: formattedPrompt
         )
-        
+
         return AsyncThrowingStream { continuation in
-            Task {
+            let task = Task {
                 var rawOutput = ""
                 do {
                     for try await delta in rawStream {
+                        try Task.checkCancellation()
                         rawOutput += delta
                         continuation.yield(cleanedSwiftLlamaOutput(rawOutput))
                     }
                     logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
                     continuation.finish()
+                } catch is CancellationError {
+                    logger.info("Cancelled SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
+                    continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
                 }
             }
+
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
+            }
         }
     }
-    
+
     private func swiftLlamaConfiguration(for chat: ChatConfiguration) -> Configuration {
         Configuration(
             seed: 1234,
@@ -111,52 +119,59 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
             stopTokens: swiftLlamaStopTokens(for: chat)
         )
     }
-    
+
     private func formattedSwiftLlamaPrompt(_ prompt: String, chat: ChatConfiguration) -> String {
+        let systemPrompt = chat.settings.prompt.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if chat.settings.modelSettingsTemplate == ChatSettingsTemplate.ggufTemplateName,
+           let formattedPrompt = ChatTemplateFormatter.format(template: chat.settings.prompt.promptFormat, systemPrompt: systemPrompt, userPrompt: prompt) {
+            return formattedPrompt
+        }
+
         var formattedPrompt = chat.settings.prompt.promptFormat
             .replacingOccurrences(of: "{{prompt}}", with: prompt)
             .replacingOccurrences(of: "{prompt}", with: prompt)
             .replacingOccurrences(of: "\\n", with: "\n")
-        
-        let systemPrompt = chat.settings.prompt.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+
         if !systemPrompt.isEmpty && formattedPrompt.hasPrefix("<|turn>user") {
             formattedPrompt = "<|turn>system\n\(systemPrompt)<turn|>\n" + formattedPrompt
         }
-        
+
         return formattedPrompt
     }
-    
+
     private func swiftLlamaStopTokens(for chat: ChatConfiguration) -> [String] {
         let customStopTokens = chat.settings.prompt.reversePrompt
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        
+
         var stopTokens: [String] = []
-        for token in customStopTokens + ["<turn|>", "<|turn>user", "<|turn>system"] where !stopTokens.contains(token) {
+        for token in customStopTokens + ["<turn|>", "<|turn>user", "<|turn>system", "<｜end▁of▁sentence｜>", "<｜User｜>"] where !stopTokens.contains(token) {
             stopTokens.append(token)
         }
         return stopTokens
     }
-    
+
     private func cleanedSwiftLlamaOutput(_ output: String) -> String {
         output
-            .replacingOccurrences(of: "<turn|>", with: "")
+            .replacing("<turn|>", with: "")
+            .replacing("<｜end▁of▁sentence｜>", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     private func promptWithRAG(prompt: String, context: [RAGDocument]) -> String {
         guard !context.isEmpty else { return prompt }
-        
+
         let contextText = context
             .map { "\($0.title)\n\($0.text)" }
             .joined(separator: "\n\n")
-        
+
         return """
         Use the following context when it is relevant.
-        
+
         \(contextText)
-        
+
         User prompt:
         \(prompt)
         """

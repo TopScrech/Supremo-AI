@@ -6,7 +6,7 @@ struct ModelInstallView: View {
     @State private var selectedScreen = SettingsScreen.downloads
     
     var body: some View {
-        SettingsHomeView(selectedScreen: $selectedScreen)
+        SettingsHomeView($selectedScreen)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", systemImage: "checkmark") {

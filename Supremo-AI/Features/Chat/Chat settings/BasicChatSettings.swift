@@ -1,13 +1,26 @@
 import ScrechKit
 
 struct BasicChatSettings: View {
-    @Binding var chat: ChatConfiguration
+    @Binding private var chat: ChatConfiguration
+    
+    init(_ chat: Binding<ChatConfiguration>) {
+        _chat = chat
+    }
     
     var body: some View {
-        Section("Basic Settings") {
-            TextField("Title", text: $chat.title)
-            TextField("Model name", text: $chat.modelName)
-
+        Section {
+            HStack {
+                Text("Chat name")
+                
+                TextField("Title", text: $chat.title)
+                    .multilineTextAlignment(.trailing)
+                    .secondary()
+            }
+            
+            LabeledContent("Model", value: chat.modelName)
+        }
+        
+        Section {
             Picker("Inference", selection: $chat.settings.inference) {
                 ForEach(InferenceKind.allCases) {
                     Text($0.label)
@@ -15,17 +28,7 @@ struct BasicChatSettings: View {
                 }
             }
             
-            Picker("Template", selection: $chat.settings.modelSettingsTemplate) {
-                ForEach(ChatSettingsTemplate.builtIns) {
-                    Text($0.name)
-                        .tag($0.name)
-                }
-            }
-            .onChange(of: chat.settings.modelSettingsTemplate) { _, newValue in
-                if let template = ChatSettingsTemplate.builtIns.first(where: { $0.name == newValue }) {
-                    chat.applyTemplate(template)
-                }
-            }
+            TemplatePicker($chat)
             
             Picker("Chat Style", selection: $chat.settings.style) {
                 ForEach(ChatStyle.allCases) {
@@ -42,7 +45,6 @@ struct BasicChatSettings: View {
         Section("Info") {
             Text(chat.id.uuidString)
                 .caption()
-                .textSelection(.enabled)
             
             LabeledContent("Created", value: chat.createdAt, format: .dateTime)
             LabeledContent("Updated", value: chat.updatedAt, format: .dateTime)

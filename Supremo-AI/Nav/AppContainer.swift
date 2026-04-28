@@ -1,4 +1,4 @@
-import SwiftUI
+import ScrechKit
 
 struct AppContainer: View {
     @Environment(ChatAppModel.self) private var appModel
@@ -23,14 +23,14 @@ struct AppContainer: View {
                 EmptyChatView()
             }
         }
-        .sheet(isPresented: $showSettings) {
-            #if os(macOS)
+        .sheet($showSettings) {
+#if os(macOS)
             SettingsHomeView(selectedScreen: $selectedSettingsScreen)
-            #else
+#else
             NavigationStack {
-                SettingsHomeView(selectedScreen: $selectedSettingsScreen)
+                SettingsHomeView($selectedSettingsScreen)
             }
-            #endif
+#endif
         }
         .task {
             if appModel.chats.isEmpty {

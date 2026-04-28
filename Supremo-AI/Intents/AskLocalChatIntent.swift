@@ -1,5 +1,4 @@
 import AppIntents
-import Foundation
 
 struct AskLocalChatIntent: AppIntent {
     nonisolated static let title: LocalizedStringResource = "Ask Local LLM"
@@ -9,21 +8,12 @@ struct AskLocalChatIntent: AppIntent {
     @Parameter(title: "Prompt")
     var prompt: String
     
+    @Parameter(title: "Model")
+    var model: LocalModelEntity?
+    
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let store = JSONFileStore()
-        let chats = (try? store.load([ChatConfiguration].self, from: "chats.json")) ?? [ChatConfiguration.sample]
-        let chat = chats.first ?? .sample
-        let text = previewResponse(prompt: prompt, chat: chat)
-        return .result(value: text)
-    }
-    
-    private func previewResponse(prompt: String, chat: ChatConfiguration) -> String {
-        [
-            "Configured chat: \(chat.title)",
-            "Model: \(chat.modelName)",
-            "Prompt: \(prompt)",
-            "Connect SwiftLlama to run this shortcut with real offline inference"
-        ].joined(separator: "\n\n")
+        let response = try await ShortcutInferenceService().response(prompt: prompt, modelID: model?.id)
+        return .result(value: response)
     }
 }

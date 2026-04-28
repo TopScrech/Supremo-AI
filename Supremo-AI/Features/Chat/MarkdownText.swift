@@ -1,7 +1,7 @@
-import ScrechKit
+import SwiftUI
 
 struct MarkdownText: View {
-    let text: String
+    private let text: String
     
     init(_ text: String) {
         self.text = text

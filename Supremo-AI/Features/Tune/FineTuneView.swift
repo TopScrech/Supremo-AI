@@ -17,11 +17,6 @@ struct FineTuneView: View {
                 Button("Export LoRA", systemImage: "square.and.arrow.up") {}
                     .disabled(loraName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            
-            Section("Engine") {
-                Text("Fine-tuning controls are staged here to mirror LLMFarm. Training requires the native backend before jobs can run")
-            }
         }
-        .navigationTitle("Fine Tune")
     }
 }

@@ -3,9 +3,10 @@ import UniformTypeIdentifiers
 
 struct ModelsView: View {
     @Environment(ChatAppModel.self) private var appModel
+    @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
     
     @State private var showImporter = false
-    @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
+    @State private var isDeleteAllPresented = false
     
     private var sortedModels: [ModelFile] {
         switch sortOrder {
@@ -51,13 +52,14 @@ struct ModelsView: View {
             }
             .foregroundStyle(.foreground)
             
-            Picker("Sort by", selection: $sortOrder) {
-                ForEach(ModelSortOrder.allCases) {
-                    Text($0.label)
-                        .tag($0)
+            if !appModel.modelFiles.isEmpty {
+                Picker("Sort by", selection: $sortOrder) {
+                    ForEach(ModelSortOrder.allCases) {
+                        Text($0.label)
+                            .tag($0)
+                    }
                 }
             }
-            .disabled(appModel.modelFiles.isEmpty)
             
             Section {
                 if appModel.modelFiles.isEmpty {
@@ -73,17 +75,31 @@ struct ModelsView: View {
                     
                     Spacer()
                     
-                    Text("Total: \(appModel.localModelsSizeDescription)")
-                        .secondary()
+                    if !appModel.modelFiles.isEmpty {
+                        Text("Total: \(appModel.localModelsSizeDescription)")
+                            .secondary()
+                    }
                 }
             }
+            
+            if !appModel.modelFiles.isEmpty {
+                Button("Delete all", systemImage: "trash", role: .destructive) {
+                    isDeleteAllPresented = true
+                }
+                .foregroundStyle(.red)
+            }
         }
-        .navigationTitle("Models")
         .scrollIndicators(.never)
+        .animation(.default, value: appModel.modelFiles)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
             if let url = try? result.get() {
                 appModel.importModel(from: url)
             }
+        }
+        .alert("Delete all local models?", isPresented: $isDeleteAllPresented) {
+            Button("Delete all", systemImage: "trash", role: .destructive, action: appModel.deleteAllModels)
+        } message: {
+            Text("This removes every local model file and clears model selection from chats")
         }
     }
     

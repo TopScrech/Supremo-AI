@@ -10,25 +10,24 @@ struct ModelInitializationView: View {
     
     var body: some View {
         ContentUnavailableView {
-            Label(state.title, systemImage: state.systemImage)
+            Label(title, systemImage: state.systemImage)
         } description: {
             Text(description)
         } actions: {
-            VStack {
-                Button(buttonTitle, systemImage: buttonImage, action: initializeAction)
-                    .buttonStyle(.borderedProminent)
+            HStack {
+                Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
+                    .buttonStyle(.glass)
                     .disabled(state == .initializing)
                 
-                if state == .ready {
-                    Button("Eject Model", systemImage: "eject", action: ejectAction)
-                        .buttonStyle(.bordered)
-                }
-                
-                Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
-                    .buttonStyle(.bordered)
+                Button(buttonTitle, systemImage: buttonImage, action: initializeAction)
+                    .buttonStyle(.glassProminent)
                     .disabled(state == .initializing)
             }
         }
+    }
+    
+    private var title: String {
+        state == .idle ? chat.modelName : state.title
     }
     
     private var description: String {
@@ -36,7 +35,7 @@ struct ModelInitializationView: View {
         case .initializing: "Loading \(chat.modelName) before the first message"
         case .failed: message ?? "The selected model could not be loaded"
         case .ready: "\(chat.modelName) is ready for chat"
-        case .idle: "Load \(chat.modelName) before sending messages"
+        case .idle: "Using the \(chat.settings.modelSettingsTemplate) template"
         }
     }
     

@@ -72,7 +72,7 @@ public class SwiftLlama {
         
         do {
             try model.start(for: prompt)
-            while model.shouldContinue {
+            while model.shouldContinue && !Task.isCancelled {
                 var delta = try model.continue()
                 if contentStarted { // remove the prefix empty spaces
                     if needToStop(after: delta, output: output) {
@@ -133,7 +133,7 @@ public class SwiftLlama {
     public func start(for prompt: Prompt, sessionSupport: Bool = false) -> AsyncThrowingStream<String, Error> {
         let sessionPrompt = prepare(sessionSupport: sessionSupport, for: prompt)
         return .init { continuation in
-            Task {
+            let task = Task {
                 response(for: sessionPrompt) { [weak self] delta in
                     continuation.yield(delta)
                     self?.session?.response(delta: delta)
@@ -141,6 +141,10 @@ public class SwiftLlama {
                     continuation.finish()
                     self?.session?.endResponse()
                 }
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }

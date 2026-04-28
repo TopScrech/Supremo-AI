@@ -8,6 +8,8 @@ struct ModelFile: Identifiable, Codable, Equatable {
     var remoteURL: URL?
     var quantization: String
     var family: InferenceKind
+    var promptTemplate: String? = nil
+    var ggufPromptTemplate: String? = nil
     var isMultimodalProjector = false
     var isPartialDownload: Bool?
     

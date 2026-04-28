@@ -1,10 +1,14 @@
 import SwiftUI
 
-struct RagSettingsSection: View {
-    @Binding var chat: ChatConfiguration
+struct RAGSettingsSection: View {
+    @Binding private var chat: ChatConfiguration
+    
+    init(_ chat: Binding<ChatConfiguration>) {
+        _chat = chat
+    }
     
     var body: some View {
-        Section("RAG") {
+        Section {
             Picker("Embedding Model", selection: $chat.settings.rag.embeddingModel) {
                 ForEach(EmbeddingModel.allCases) {
                     Text($0.label)
@@ -17,6 +21,6 @@ struct RagSettingsSection: View {
             Stepper("Overlap \(chat.settings.rag.overlapLength)", value: $chat.settings.rag.overlapLength, in: 0...1000, step: 20)
         }
         
-        DocumentsView(chat: chat)
+        DocumentsView(chat)
     }
 }

@@ -1,16 +1,20 @@
 import ScrechKit
 
-struct DownloadableModelCard: View {
+struct DownloadableModelVersionRow: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let model: DownloadableModel
+    private let isCheckingNotForAllAudiences: Bool
+    private let download: (DownloadableModel) -> Void
     
-    init(_ model: DownloadableModel) {
+    init(_ model: DownloadableModel, isCheckingNotForAllAudiences: Bool, download: @escaping (DownloadableModel) -> Void) {
         self.model = model
+        self.isCheckingNotForAllAudiences = isCheckingNotForAllAudiences
+        self.download = download
     }
     
     var body: some View {
-        let downloadState = appModel.downloadStates[model.fileName]
+        let downloadState = appModel.downloadStateEntry(for: model.fileName).state
         
         let isDownloaded = appModel.modelFiles.contains {
             $0.fileName == model.fileName && $0.isAvailableLocally
@@ -19,19 +23,16 @@ struct DownloadableModelCard: View {
         let capacityErrorMessage = appModel.downloadCapacityErrorMessage(for: model)
         
         HStack {
-            VStack(alignment: .leading, spacing: 5) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(model.familyName)
-                        .headline()
-                    
-                    HStack {
-                        Label(model.quantization, systemImage: "tag")
-                        Label(model.displaySize, systemImage: "externaldrive")
-                    }
-                    .labelIconToTitleSpacing(2)
-                    .caption()
-                    .foregroundStyle(.tertiary)
+            VStack(alignment: .leading) {
+                Text(model.quantization)
+                    .headline()
+                
+                HStack {
+                    Label(model.displaySize, systemImage: "externaldrive")
                 }
+                .labelIconToTitleSpacing(2)
+                .caption()
+                .foregroundStyle(.tertiary)
                 
                 if let downloadState, downloadState.isDownloading {
                     ProgressView(value: downloadState.progress)
@@ -64,27 +65,14 @@ struct DownloadableModelCard: View {
                     .buttonBorderShape(.circle)
                 
             } else if downloadState?.isDownloading != true {
-                SFButton("arrow.down") {
-                    Task {
-                        await appModel.download(model)
-                    }
+                Button("Download", systemImage: "arrow.down") {
+                    download(model)
                 }
-                .disabled(capacityErrorMessage != nil)
+                .labelStyle(.iconOnly)
+                .disabled(capacityErrorMessage != nil || isCheckingNotForAllAudiences)
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.circle)
             }
         }
-        .contextMenu {
-            Button("Copy Download Link", systemImage: "link", action: copyDownloadLink)
-        }
-    }
-    
-    private func copyDownloadLink() {
-#if os(iOS) || os(visionOS)
-        UIPasteboard.general.string = model.url.absoluteString
-#elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(model.url.absoluteString, forType: .string)
-#endif
     }
 }

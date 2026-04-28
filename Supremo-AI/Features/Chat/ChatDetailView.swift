@@ -1,17 +1,22 @@
-import SwiftUI
+import ScrechKit
+import ChitChat
 
 struct ChatDetailView: View {
     @Environment(ChatAppModel.self) private var appModel
     
     @Binding var selectedSettingsScreen: SettingsScreen
     @Binding var showAppSettings: Bool
+    let chat: ChatConfiguration
+    
+    @FocusState private var isComposerFocused: Bool
     
     @State private var prompt = ""
     @State private var showSettings = false
     @State private var showModelInstall = false
-    let chat: ChatConfiguration
     
     var body: some View {
+        @Bindable var appModel = appModel
+        
         VStack {
             if !appModel.isModelReady(for: chat) {
                 MissingModelView(
@@ -24,7 +29,7 @@ struct ChatDetailView: View {
                     }
                 )
             } else if !appModel.isInferenceBackendAvailable {
-                MissingInferenceBackend(chat: chat) {
+                MissingInferenceBackend(chat) {
                     showModelInstall = true
                 }
             } else if !appModel.isModelInitialized(for: chat) {
@@ -33,12 +38,10 @@ struct ChatDetailView: View {
                     state: appModel.modelInitializationState(for: chat),
                     message: appModel.modelInitializationMessages[chat.id],
                     initializeAction: initializeModel,
-                    ejectAction: {
-                        ejectModel()
-                    }, editAction: {
-                        showSettings = true
-                    }
-                )
+                    ejectAction: ejectModel
+                ) {
+                    showSettings = true
+                }
             } else if chat.messages.isEmpty {
                 ContentUnavailableView("Start a Conversation", systemImage: "text.bubble", description: Text(chat.modelName))
             } else {
@@ -65,8 +68,10 @@ struct ChatDetailView: View {
                 }
             }
             
-            ChatInputBar(prompt: $prompt, isGenerating: appModel.isGenerating, sendAction: sendPrompt)
-                .padding()
+            let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
+            
+            ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
+                .animation(.default, value: appModel.isGenerating)
                 .disabled(!appModel.canRunChat(chat))
         }
         .navigationTitle(chat.title)
@@ -83,9 +88,7 @@ struct ChatDetailView: View {
             
             ToolbarItemGroup {
                 if appModel.isModelInitialized(for: chat) {
-                    Button("Eject Model", systemImage: "eject") {
-                        ejectModel()
-                    }
+                    Button("Eject Model", systemImage: "eject", action: ejectModel)
                 }
                 
                 Button("Install Model", systemImage: "arrow.down.circle") {
@@ -97,12 +100,12 @@ struct ChatDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSettings) {
+        .sheet($showSettings) {
             NavigationStack {
-                ChatSettingsEditor(chat: chat)
+                ChatSettingsEditor(chat)
             }
         }
-        .sheet(isPresented: $showModelInstall) {
+        .sheet($showModelInstall) {
             NavigationStack {
                 ModelInstallView()
             }
@@ -121,6 +124,11 @@ struct ChatDetailView: View {
     private func initializeModel() {
         Task {
             await appModel.initializeModel(for: chat)
+            
+            if appModel.isModelInitialized(for: chat) {
+                await Task.yield()
+                isComposerFocused = true
+            }
         }
     }
     

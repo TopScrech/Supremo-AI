@@ -7,7 +7,7 @@ struct ChatSettingsEditor: View {
     @State private var draft: ChatConfiguration
     @State private var section = ChatSettingsSection.basic
     
-    init(chat: ChatConfiguration) {
+    init(_ chat: ChatConfiguration) {
         _draft = State(initialValue: chat)
     }
     
@@ -15,7 +15,8 @@ struct ChatSettingsEditor: View {
         VStack {
             Picker("Section", selection: $section) {
                 ForEach(ChatSettingsSection.allCases) {
-                    Text($0.label).tag($0)
+                    Text($0.label)
+                        .tag($0)
                 }
             }
             .pickerStyle(.segmented)
@@ -24,23 +25,23 @@ struct ChatSettingsEditor: View {
             Form {
                 switch section {
                 case .basic:
-                    BasicChatSettings(chat: $draft)
+                    BasicChatSettings($draft)
                     
                 case .prediction:
-                    PredictionSettingsSection(settings: $draft.settings.prediction)
+                    PredictionSettingsSection($draft.settings.prediction)
                     
                 case .prompt:
-                    PromptSettingsSection(settings: $draft.settings.prompt)
+                    PromptSettingsSection($draft.settings.prompt)
                     
                 case .sampling:
-                    SamplingSettingsSection(settings: $draft.settings.sampling)
+                    SamplingSettingsSection($draft.settings.sampling)
                     
                 case .rag:
-                    RagSettingsSection(chat: $draft)
+                    RAGSettingsSection($draft)
                 }
             }
         }
-        .navigationTitle(draft.title)
+        .navigationTitle(section.label)
         .scrollIndicators(.never)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {

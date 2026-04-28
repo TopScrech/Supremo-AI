@@ -3,15 +3,18 @@ import Foundation
 
 struct SummarizeTextIntent: AppIntent {
     nonisolated static let title: LocalizedStringResource = "Summarize with Local LLM"
-    nonisolated static let description = IntentDescription("Create a local summary preview")
+    nonisolated static let description = IntentDescription("Summarize text with a local model")
     nonisolated static let openAppWhenRun = false
     
     @Parameter(title: "Text")
     var text: String
     
+    @Parameter(title: "Model")
+    var model: LocalModelEntity?
+    
+    @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let sentence = trimmed.split(separator: ".").first.map(String.init) ?? trimmed
-        return .result(value: "Summary preview: \(sentence)")
+        let response = try await ShortcutInferenceService().summary(text: text, modelID: model?.id)
+        return .result(value: response)
     }
 }
