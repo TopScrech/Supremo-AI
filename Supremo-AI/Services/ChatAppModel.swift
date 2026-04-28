@@ -54,8 +54,13 @@ final class ChatAppModel {
     
     var downloadableModelFamilies: [DownloadableModelFamily] {
         var families: [DownloadableModelFamily] = []
+        var versionSelectionIDs = Set<String>()
         
         for model in downloadableModels {
+            if model.supportsVersionSelection {
+                guard versionSelectionIDs.insert(model.versionSelectionID).inserted else { continue }
+            }
+
             if let index = families.firstIndex(where: { $0.name == model.familyDisplayName }) {
                 families[index].models.append(model)
             } else {

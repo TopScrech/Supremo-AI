@@ -42,6 +42,14 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     }
 
     var supportsVersionSelection: Bool {
-        familyName.localizedStandardContains("Llama 3.2") && huggingFaceModelCardURL != nil
+        (familyName.localizedStandardContains("Llama 3.2") || familyName.localizedStandardContains("Gemma 4")) && huggingFaceModelCardURL != nil
+    }
+
+    var versionSelectionID: String {
+        if supportsVersionSelection, let huggingFaceModelCardURL {
+            return huggingFaceModelCardURL.absoluteString
+        }
+
+        return fileName
     }
 }
