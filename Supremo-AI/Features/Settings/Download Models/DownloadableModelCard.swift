@@ -74,6 +74,7 @@ struct DownloadableModelCard: View {
                 .buttonBorderShape(.circle)
             }
         }
+        .contentShape(.rect)
         .contextMenu {
             Button("Copy download link", systemImage: "link", action: copyDownloadLink)
             
