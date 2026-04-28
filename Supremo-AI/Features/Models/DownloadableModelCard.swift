@@ -12,7 +12,7 @@ struct DownloadableModelCard: View {
     }
 
     var body: some View {
-        let downloadState = appModel.downloadStates[model.fileName]
+        let downloadState = appModel.downloadStateEntry(for: model.fileName).state
 
         let isDownloaded = appModel.modelFiles.contains {
             $0.fileName == model.fileName && $0.isAvailableLocally

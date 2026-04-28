@@ -9,6 +9,7 @@ final class ChatAppModel {
     var modelFiles: [ModelFile] = []
     var downloadableModels = ModelCatalog.featured
     var downloadStates: [String: DownloadState] = [:]
+    var downloadCapacityErrorMessages: [String: String] = [:]
     var modelInitializationStates: [UUID: ModelInitializationState] = [:]
     var modelInitializationMessages: [UUID: String] = [:]
     var isGenerating = false
@@ -23,6 +24,7 @@ final class ChatAppModel {
     private var huggingFaceMetadataCache: [String: HuggingFaceModelMetadata] = [:]
     private var generationTask: Task<Void, Never>?
     private var typingTask: Task<Void, Never>?
+    @ObservationIgnored private var downloadStateEntries: [String: DownloadStateEntry] = [:]
     
     var isInferenceBackendAvailable: Bool {
         inferenceEngine.isAvailable
@@ -69,6 +71,20 @@ final class ChatAppModel {
     }
     
     func downloadCapacityErrorMessage(for model: DownloadableModel) -> String? {
+        downloadCapacityErrorMessages[model.fileName]
+    }
+    
+    func downloadStateEntry(for fileName: String) -> DownloadStateEntry {
+        if let entry = downloadStateEntries[fileName] {
+            return entry
+        }
+        
+        let entry = DownloadStateEntry(state: downloadStates[fileName])
+        downloadStateEntries[fileName] = entry
+        return entry
+    }
+    
+    private func resolvedDownloadCapacityErrorMessage(for model: DownloadableModel) -> String? {
         guard
             let remainingBytes = remainingDownloadBytes(for: model),
             let availableStorageBytes = StorageCapacity.availableForImportantUsage
@@ -262,6 +278,7 @@ final class ChatAppModel {
         }
         
         logger.info("Deleted \(model.fileName, privacy: .public)")
+        refreshDownloadCapacityErrorMessages()
         persistStatus()
     }
     
@@ -273,8 +290,8 @@ final class ChatAppModel {
         }
         
         for model in modelFiles {
-            downloadStates[model.fileName] = nil
-            downloadStates[completeFileName(forPartialDownload: model)] = nil
+            setDownloadState(nil, for: model.fileName)
+            setDownloadState(nil, for: completeFileName(forPartialDownload: model))
         }
         
         modelFiles.removeAll()
@@ -288,6 +305,7 @@ final class ChatAppModel {
         }
         
         logger.info("Deleted all local models")
+        refreshDownloadCapacityErrorMessages()
         persistStatus()
     }
     
@@ -568,6 +586,7 @@ final class ChatAppModel {
             await assignModel(model, to: selectedChat)
         }
         logger.info("Added \(downloadableModel.fileName, privacy: .public)")
+        refreshDownloadCapacityErrorMessages()
         persistStatus()
     }
     
@@ -604,12 +623,19 @@ final class ChatAppModel {
             logger.info("Downloading \(currentModel.fileName, privacy: .public)")
             try store.ensureDirectories()
             let existingBytes = fileSize(for: partialDestination)
-            if let errorMessage = downloadCapacityErrorMessage(for: currentModel) {
-                downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: errorMessage)
+            updateDownloadCapacityErrorMessage(for: currentModel)
+            if let errorMessage = downloadCapacityErrorMessages[currentModel.fileName] {
+                setDownloadState(
+                    DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: errorMessage),
+                    for: currentModel.fileName
+                )
                 return false
             }
             
-            downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: true)
+            setDownloadState(
+                DownloadState(downloadedBytes: existingBytes, totalBytes: currentModel.sizeBytes, isDownloading: true),
+                for: currentModel.fileName
+            )
             
             createPartialDownloadFileIfNeeded(at: partialDestination)
             refreshModelFilesFromDisk()
@@ -619,12 +645,17 @@ final class ChatAppModel {
                 try FileManager.default.removeItem(at: destination)
             }
             try FileManager.default.moveItem(at: partialDestination, to: destination)
-            downloadStates[currentModel.fileName]?.isDownloading = false
+            updateDownloadState(for: currentModel.fileName) {
+                $0.isDownloading = false
+            }
             await registerDownloadedModel(currentModel, localURL: destination)
             return true
         } catch {
             refreshModelFilesFromDisk()
-            downloadStates[currentModel.fileName] = DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription)
+            setDownloadState(
+                DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription),
+                for: currentModel.fileName
+            )
             logger.error("\(error.localizedDescription, privacy: .public)")
             return false
         }
@@ -664,8 +695,21 @@ final class ChatAppModel {
     }
     
     private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?) {
-        downloadStates[modelFileName]?.downloadedBytes = downloadedBytes
-        downloadStates[modelFileName]?.totalBytes = totalBytes
+        updateDownloadState(for: modelFileName) {
+            $0.downloadedBytes = downloadedBytes
+            $0.totalBytes = totalBytes
+        }
+    }
+    
+    private func setDownloadState(_ state: DownloadState?, for fileName: String) {
+        downloadStates[fileName] = state
+        downloadStateEntry(for: fileName).state = state
+    }
+    
+    private func updateDownloadState(for fileName: String, update: (inout DownloadState) -> Void) {
+        guard var state = downloadStates[fileName] else { return }
+        update(&state)
+        setDownloadState(state, for: fileName)
     }
     
     private func downloadableModel(forPartialDownload model: ModelFile) -> DownloadableModel? {
@@ -709,8 +753,19 @@ final class ChatAppModel {
             let sizeBytes = try await remoteFileSizeResolver.sizeBytes(for: model.url)
             guard let index = downloadableModels.firstIndex(where: { $0.fileName == model.fileName }) else { return }
             downloadableModels[index].sizeBytes = sizeBytes
+            updateDownloadCapacityErrorMessage(for: downloadableModels[index])
         } catch {
             logger.error("Unable to fetch size for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
+    }
+    
+    private func updateDownloadCapacityErrorMessage(for model: DownloadableModel) {
+        downloadCapacityErrorMessages[model.fileName] = resolvedDownloadCapacityErrorMessage(for: model)
+    }
+    
+    private func refreshDownloadCapacityErrorMessages() {
+        for model in downloadableModels {
+            updateDownloadCapacityErrorMessage(for: model)
         }
     }
     
@@ -967,7 +1022,10 @@ private struct HuggingFaceModelCardData: Decodable {
     }
 }
 
-private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSessionDataDelegate {
+private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate {
+    private static let progressUpdateInterval: TimeInterval = 1
+    private static let progressUpdateByteInterval = 16 * 1024 * 1024
+    
     private let destination: URL
     private let existingBytes: Int
     private let progressHandler: @Sendable (Int, Int?) -> Void
@@ -975,6 +1033,8 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
     private var fileHandle: FileHandle?
     private var downloadedBytes = 0
     private var totalBytes: Int?
+    private var lastProgressUpdate = Date.distantPast
+    private var lastProgressBytes = 0
     
     init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?) -> Void) {
         self.destination = destination
@@ -989,7 +1049,6 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
         }
     }
     
-    @MainActor
     func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
@@ -1018,7 +1077,7 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
                 totalBytes = effectiveExistingBytes + Int(response.expectedContentLength)
             }
             
-            progressHandler(downloadedBytes, totalBytes)
+            reportProgress(force: true)
             completionHandler(.allow)
         } catch {
             continuation?.resume(throwing: error)
@@ -1035,7 +1094,7 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
         do {
             try fileHandle?.write(contentsOf: data)
             downloadedBytes += data.count
-            progressHandler(downloadedBytes, totalBytes)
+            reportProgress()
         } catch {
             dataTask.cancel()
             continuation?.resume(throwing: error)
@@ -1050,6 +1109,7 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
     ) {
         try? fileHandle?.close()
         fileHandle = nil
+        reportProgress(force: true)
         
         if let error {
             continuation?.resume(throwing: error)
@@ -1058,6 +1118,18 @@ private final class ModelDataDownloadDelegate: NSObject, @preconcurrency URLSess
         }
         
         continuation = nil
+    }
+    
+    private func reportProgress(force: Bool = false) {
+        let now = Date()
+        let hasEnoughBytes = downloadedBytes - lastProgressBytes >= Self.progressUpdateByteInterval
+        let hasEnoughTime = now.timeIntervalSince(lastProgressUpdate) >= Self.progressUpdateInterval
+        
+        guard force || hasEnoughBytes || hasEnoughTime else { return }
+        
+        lastProgressUpdate = now
+        lastProgressBytes = downloadedBytes
+        progressHandler(downloadedBytes, totalBytes)
     }
 }
 
