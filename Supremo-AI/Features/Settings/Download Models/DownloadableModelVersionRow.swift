@@ -61,7 +61,9 @@ struct DownloadableModelVersionRow: View {
                     .foregroundStyle(.green)
                     .headline()
                     .disabled(true)
+#if !os(visionOS)
                     .buttonStyle(.glassProminent)
+#endif
                     .buttonBorderShape(.circle)
                 
             } else if downloadState?.isDownloading != true {
@@ -70,7 +72,9 @@ struct DownloadableModelVersionRow: View {
                 }
                 .labelStyle(.iconOnly)
                 .disabled(capacityErrorMessage != nil || isCheckingNotForAllAudiences)
+#if !os(visionOS)
                 .buttonStyle(.glassProminent)
+#endif
                 .buttonBorderShape(.circle)
             }
         }

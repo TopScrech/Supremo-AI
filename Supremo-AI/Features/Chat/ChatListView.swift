@@ -26,9 +26,9 @@ struct ChatListView: View {
             ToolbarItem(placement: .bottomBar) {
                 TextField("  Search chats", text: $appModel.searchText)
             }
-            
+#if !os(visionOS)
             ToolbarSpacer(.fixed, placement: .bottomBar)
-            
+#endif
             ToolbarItem(placement: .bottomBar) {
                 Button("New Chat", systemImage: "plus", action: appModel.createChat)
             }
