@@ -3,10 +3,10 @@ import UniformTypeIdentifiers
 
 struct ModelsView: View {
     @Environment(ChatAppModel.self) private var appModel
+    @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
     
     @State private var showImporter = false
     @State private var isDeleteAllPresented = false
-    @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
     
     private var sortedModels: [ModelFile] {
         switch sortOrder {
@@ -90,6 +90,7 @@ struct ModelsView: View {
             }
         }
         .scrollIndicators(.never)
+        .animation(.default, value: appModel.modelFiles)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
             if let url = try? result.get() {
                 appModel.importModel(from: url)
