@@ -42,7 +42,7 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
         let modelName = model.displayName
 
         if let promptTemplate = model.promptTemplate {
-            return ChatSettingsTemplate("Dynamic Template", inference: model.family, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: promptTemplate)
+            return ChatSettingsTemplate("Dynamic", inference: model.family, contextLength: 4096, batchSize: 512, temperature: 0.7, topK: 40, topP: 0.9, useMetal: true, promptFormat: promptTemplate)
         }
 
         if modelName.localizedStandardContains("gemma 4") || modelName.localizedStandardContains("gemma-4") {

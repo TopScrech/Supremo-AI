@@ -12,6 +12,8 @@ struct TemplatePicker: View {
             if !ChatSettingsTemplate.builtIns.contains(where: { $0.name == chat.settings.modelSettingsTemplate }) {
                 Text(chat.settings.modelSettingsTemplate)
                     .tag(chat.settings.modelSettingsTemplate)
+                
+                Divider()
             }
             
             ForEach(ChatSettingsTemplate.builtIns) {

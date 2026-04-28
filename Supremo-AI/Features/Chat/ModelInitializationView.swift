@@ -10,7 +10,7 @@ struct ModelInitializationView: View {
     
     var body: some View {
         ContentUnavailableView {
-            Label(state.title, systemImage: state.systemImage)
+            Label(title, systemImage: state.systemImage)
         } description: {
             Text(description)
         } actions: {
@@ -26,12 +26,16 @@ struct ModelInitializationView: View {
         }
     }
     
+    private var title: String {
+        state == .idle ? chat.modelName : state.title
+    }
+    
     private var description: String {
         switch state {
         case .initializing: "Loading \(chat.modelName) before the first message"
         case .failed: message ?? "The selected model could not be loaded"
         case .ready: "\(chat.modelName) is ready for chat"
-        case .idle: "Load \(chat.modelName) before sending messages"
+        case .idle: "Using the \(chat.settings.modelSettingsTemplate) template"
         }
     }
     
