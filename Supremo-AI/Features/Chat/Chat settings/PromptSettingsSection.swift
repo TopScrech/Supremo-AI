@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct PromptSettingsSection: View {
-    @Binding var settings: PromptSettings
+    @Binding private var settings: PromptSettings
+    
+    init(_ settings: Binding<PromptSettings>) {
+        _settings = settings
+    }
     
     var body: some View {
         TextField("System prompt", text: $settings.systemPrompt, axis: .vertical)

@@ -28,16 +28,16 @@ struct ChatSettingsEditor: View {
                     BasicChatSettings($draft)
                     
                 case .prediction:
-                    PredictionSettingsSection(settings: $draft.settings.prediction)
+                    PredictionSettingsSection($draft.settings.prediction)
                     
                 case .prompt:
-                    PromptSettingsSection(settings: $draft.settings.prompt)
+                    PromptSettingsSection($draft.settings.prompt)
                     
                 case .sampling:
-                    SamplingSettingsSection(settings: $draft.settings.sampling)
+                    SamplingSettingsSection($draft.settings.sampling)
                     
                 case .rag:
-                    RAGSettingsSection(chat: $draft)
+                    RAGSettingsSection($draft)
                 }
             }
         }

@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct SamplingSettingsSection: View {
-    @Binding var settings: SamplingSettings
+    @Binding private var settings: SamplingSettings
+    
+    init(_ settings: Binding<SamplingSettings>) {
+        _settings = settings
+    }
     
     var body: some View {
         Picker("Method", selection: $settings.method) {

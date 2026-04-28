@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct RAGSettingsSection: View {
-    @Binding var chat: ChatConfiguration
+    @Binding private var chat: ChatConfiguration
+    
+    init(_ chat: Binding<ChatConfiguration>) {
+        _chat = chat
+    }
     
     var body: some View {
         Section {
