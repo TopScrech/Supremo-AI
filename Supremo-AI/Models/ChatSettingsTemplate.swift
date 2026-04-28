@@ -38,7 +38,6 @@ struct ChatSettingsTemplate: Identifiable, Codable, Hashable {
         ChatSettingsTemplate("DeepSeek R1", inference: .deepseek, contextLength: 4096, batchSize: 512, temperature: 0.6, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<｜begin▁of▁sentence｜><｜User｜>{prompt}<｜Assistant｜>"),
         ChatSettingsTemplate("Bunny", inference: .llava, contextLength: 4096, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\n{prompt} ASSISTANT:"),
         ChatSettingsTemplate("Moondream 2", inference: .moondream, contextLength: 2048, batchSize: 512, temperature: 0, topK: 40, topP: 0.95, useMetal: true, promptFormat: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:")
-        // ChatSettingsTemplate("ChatML", inference: .llama, contextLength: 4096, batchSize: 512, temperature: 0.8, topK: 40, topP: 0.95, useMetal: true, promptFormat: "<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant")
     ]
     
     static func automaticTemplate(for model: ModelFile) -> ChatSettingsTemplate? {
