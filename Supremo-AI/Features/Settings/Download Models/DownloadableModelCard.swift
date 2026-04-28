@@ -27,12 +27,7 @@ struct DownloadableModelCard: View {
                     Text(model.familyName)
                         .headline()
                     
-                    if model.supportsVersionSelection {
-                        Label("Choose version", systemImage: "square.stack.3d.up")
-                            .labelIconToTitleSpacing(2)
-                            .caption()
-                            .foregroundStyle(.tertiary)
-                    } else {
+                    if !model.supportsVersionSelection {
                         HStack {
                             Label(model.quantization, systemImage: "tag")
                             Label(model.displaySize, systemImage: "externaldrive")
