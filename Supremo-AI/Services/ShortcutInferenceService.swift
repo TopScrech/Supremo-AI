@@ -7,6 +7,10 @@ struct ShortcutInferenceService {
     private let ragIndexer = RAGIndexer()
 
     func response(prompt: String, modelID: UUID?) async throws -> String {
+        try await response(prompt: prompt, modelID: modelID, rejectsEmptyResponse: false)
+    }
+
+    private func response(prompt: String, modelID: UUID?, rejectsEmptyResponse: Bool) async throws -> String {
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPrompt.isEmpty else {
             throw ShortcutInferenceError.emptyPrompt
@@ -38,6 +42,9 @@ struct ShortcutInferenceService {
         ) : []
 
         let response = try await inferenceEngine.response(for: trimmedPrompt, chat: chat, context: context)
+        if rejectsEmptyResponse && response.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            throw ShortcutInferenceError.emptyResponse
+        }
 
         chats[chatIndex].modelFileID = model.id
         chats[chatIndex].modelName = model.displayName
@@ -53,5 +60,33 @@ struct ShortcutInferenceService {
         try store.save(modelFiles.filter { $0.isPartialDownload != true }, to: "models.json")
 
         return response
+    }
+
+    func summary(text: String, modelID: UUID?) async throws -> String {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else {
+            throw ShortcutInferenceError.emptyPrompt
+        }
+
+        let primaryPrompt = """
+        Write a concise summary of the text below.
+
+        Text:
+        \(trimmedText)
+
+        Summary:
+        """
+
+        do {
+            return try await response(prompt: primaryPrompt, modelID: modelID, rejectsEmptyResponse: true)
+        } catch ShortcutInferenceError.emptyResponse {
+            let retryPrompt = """
+            Summarize this text in one short paragraph:
+
+            \(trimmedText)
+            """
+
+            return try await response(prompt: retryPrompt, modelID: modelID, rejectsEmptyResponse: true)
+        }
     }
 }

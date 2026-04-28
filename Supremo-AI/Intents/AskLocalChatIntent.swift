@@ -7,7 +7,7 @@ struct AskLocalChatIntent: AppIntent {
     
     @Parameter(title: "Prompt")
     var prompt: String
-
+    
     @Parameter(title: "Model")
     var model: LocalModelEntity?
     
