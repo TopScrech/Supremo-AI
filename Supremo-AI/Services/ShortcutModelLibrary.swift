@@ -71,6 +71,9 @@ struct ShortcutModelLibrary {
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
+        if lowercasedFileName.localizedStandardContains("mistral") || lowercasedFileName.localizedStandardContains("ministral") { return .mistral }
+        if lowercasedFileName.localizedStandardContains("nemotron") { return .nemotron }
+        if lowercasedFileName.localizedStandardContains("lfm2") { return .lfm2 }
         return .llama
     }
 }

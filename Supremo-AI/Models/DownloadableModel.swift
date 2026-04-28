@@ -36,6 +36,10 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         case name.hasPrefix("llama"): return "Llama"
         case name.hasPrefix("qwen"): return "Qwen"
         case name.hasPrefix("deepseek"): return "DeepSeek"
+        case name.hasPrefix("nemotron"): return "Nemotron"
+        case name.hasPrefix("lfm"): return "LFM"
+        case name.hasPrefix("ministral"): return "Ministral"
+        case name.hasPrefix("rnj"): return "RNJ"
         case name.hasPrefix("moondream"): return "Moondream"
         default: return familyName
         }

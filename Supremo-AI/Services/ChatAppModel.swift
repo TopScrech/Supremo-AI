@@ -993,6 +993,9 @@ final class ChatAppModel {
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mixtral") { return .mixtral }
+        if lowercasedFileName.localizedStandardContains("mistral") || lowercasedFileName.localizedStandardContains("ministral") { return .mistral }
+        if lowercasedFileName.localizedStandardContains("nemotron") { return .nemotron }
+        if lowercasedFileName.localizedStandardContains("lfm2") { return .lfm2 }
         if lowercasedFileName.localizedStandardContains("llava") { return .llava }
         if lowercasedFileName.localizedStandardContains("moondream") { return .moondream }
         if lowercasedFileName.localizedStandardContains("starcoder") { return .starcoder }
@@ -1046,6 +1049,9 @@ private struct HuggingFaceModelMetadata: Decodable {
         if lowercasedValue.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedValue.localizedStandardContains("phi") { return .phi }
         if lowercasedValue.localizedStandardContains("mixtral") { return .mixtral }
+        if lowercasedValue.localizedStandardContains("mistral") || lowercasedValue.localizedStandardContains("ministral") { return .mistral }
+        if lowercasedValue.localizedStandardContains("nemotron") { return .nemotron }
+        if lowercasedValue.localizedStandardContains("lfm2") { return .lfm2 }
         if lowercasedValue.localizedStandardContains("llava") { return .llava }
         if lowercasedValue.localizedStandardContains("moondream") { return .moondream }
         if lowercasedValue.localizedStandardContains("starcoder") { return .starcoder }
