@@ -84,6 +84,7 @@ struct ModelFileCard: View {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 appModel.deleteModel(model)
             }
+            .labelStyle(.iconOnly)
         }
         .contextMenu {
             Button("Delete", systemImage: "trash", role: .destructive) {
