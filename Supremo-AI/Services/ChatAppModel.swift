@@ -588,7 +588,7 @@ final class ChatAppModel {
             }
             try FileManager.default.copyItem(at: url, to: destination)
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
-            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: "Local", family: .llama)
+            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama)
             modelFiles.append(model)
             if let selectedChat, selectedChat.modelFileID == nil {
                 Task {
@@ -862,7 +862,7 @@ final class ChatAppModel {
             familyName: model.familyName,
             fileName: sibling.rfilename,
             url: url,
-            quantization: quantization(from: sibling.rfilename),
+            quantization: ModelQuantization.value(from: sibling.rfilename),
             sizeBytes: sibling.resolvedSizeBytes,
             inference: model.inference
         )
@@ -870,34 +870,9 @@ final class ChatAppModel {
 
     private func isVersionSibling(_ fileName: String, for modelFileName: String) -> Bool {
         guard fileName.hasSuffix(".gguf") else { return false }
-        let versionPrefix = versionFilePrefix(from: modelFileName)
+        let versionPrefix = ModelQuantization.filePrefix(from: modelFileName)
         guard !versionPrefix.isEmpty else { return true }
         return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
-    }
-
-    private func versionFilePrefix(from fileName: String) -> String {
-        let name = URL(filePath: fileName).deletingPathExtension().lastPathComponent
-        let separators: Set<Character> = ["-", "_", "."]
-        let scalars = Array(name)
-
-        for index in scalars.indices.reversed() {
-            guard separators.contains(scalars[index]) else { continue }
-            let suffixStart = scalars.index(after: index)
-            let suffix = String(scalars[suffixStart...])
-            if isQuantizationSuffix(suffix) {
-                return String(scalars[..<index])
-            }
-        }
-
-        return name
-    }
-
-    private func isQuantizationSuffix(_ value: String) -> Bool {
-        let lowercasedValue = value.lowercased()
-        return lowercasedValue == "f16" ||
-            lowercasedValue == "bf16" ||
-            lowercasedValue.hasPrefix("q") ||
-            lowercasedValue.hasPrefix("iq")
     }
 
     private func normalizedVersionFileName(_ fileName: String) -> String {
@@ -908,23 +883,6 @@ final class ChatAppModel {
             .replacing(".", with: "")
     }
 
-    private func quantization(from fileName: String) -> String {
-        let name = URL(filePath: fileName).deletingPathExtension().lastPathComponent
-        let separators: Set<Character> = ["-", "_", "."]
-        let scalars = Array(name)
-
-        for index in scalars.indices.reversed() {
-            guard separators.contains(scalars[index]) else { continue }
-            let suffixStart = scalars.index(after: index)
-            let suffix = String(scalars[suffixStart...])
-            if isQuantizationSuffix(suffix) {
-                return suffix
-            }
-        }
-        
-        return "GGUF"
-    }
-    
     private func metadataEnrichedModel(_ model: ModelFile) async -> ModelFile {
         guard let remoteURL = model.remoteURL,
               let metadata = try? await huggingFaceModelMetadata(for: remoteURL) else {
@@ -1021,7 +979,7 @@ final class ChatAppModel {
             fileName: url.lastPathComponent,
             localURL: url,
             remoteURL: catalogModel?.url,
-            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? "Local",
+            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
             isPartialDownload: isPartialDownload
         )

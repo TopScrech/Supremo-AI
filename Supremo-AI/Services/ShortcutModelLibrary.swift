@@ -58,7 +58,7 @@ struct ShortcutModelLibrary {
             fileName: url.lastPathComponent,
             localURL: url,
             remoteURL: catalogModel?.url,
-            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? "Local",
+            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
             isPartialDownload: isPartialDownload
         )
