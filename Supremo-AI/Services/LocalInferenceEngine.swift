@@ -121,12 +121,18 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
     }
 
     private func formattedSwiftLlamaPrompt(_ prompt: String, chat: ChatConfiguration) -> String {
+        let systemPrompt = chat.settings.prompt.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if chat.settings.modelSettingsTemplate == ChatSettingsTemplate.ggufTemplateName,
+           let formattedPrompt = ChatTemplateFormatter.format(template: chat.settings.prompt.promptFormat, systemPrompt: systemPrompt, userPrompt: prompt) {
+            return formattedPrompt
+        }
+
         var formattedPrompt = chat.settings.prompt.promptFormat
             .replacingOccurrences(of: "{{prompt}}", with: prompt)
             .replacingOccurrences(of: "{prompt}", with: prompt)
             .replacingOccurrences(of: "\\n", with: "\n")
 
-        let systemPrompt = chat.settings.prompt.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
         if !systemPrompt.isEmpty && formattedPrompt.hasPrefix("<|turn>user") {
             formattedPrompt = "<|turn>system\n\(systemPrompt)<turn|>\n" + formattedPrompt
         }

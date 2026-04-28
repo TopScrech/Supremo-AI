@@ -237,8 +237,8 @@ final class ChatAppModel {
             logger.info("Finish downloading \(model.fileName, privacy: .public) before using it")
             return
         }
-        
-        let model = await metadataEnrichedModel(model)
+
+        let model = ggufTemplateEnrichedModel(await metadataEnrichedModel(model))
         var updated = chat
         updated.modelFileID = model.id
         updated.modelName = model.displayName
@@ -751,6 +751,24 @@ final class ChatAppModel {
             return enrichedModel
         }
         
+        modelFiles[index] = enrichedModel
+        persistStatus()
+        return enrichedModel
+    }
+
+    private func ggufTemplateEnrichedModel(_ model: ModelFile) -> ModelFile {
+        guard let localURL = model.localURL,
+              let promptTemplate = GGUFPromptTemplateReader.promptTemplate(from: localURL) else {
+            return model
+        }
+
+        var enrichedModel = model
+        enrichedModel.ggufPromptTemplate = promptTemplate
+
+        guard let index = modelFiles.firstIndex(where: { $0.id == model.id }) else {
+            return enrichedModel
+        }
+
         modelFiles[index] = enrichedModel
         persistStatus()
         return enrichedModel
