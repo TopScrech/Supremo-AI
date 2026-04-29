@@ -5,6 +5,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     var family: String
     var fileName: String
     var url: URL
+    var sourceURL: URL? = nil
     var quantization: String
     var sizeBytes: Int?
     var inference: InferenceKind
@@ -19,9 +20,10 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     }
     
     var huggingFaceModelCardURL: URL? {
-        guard url.host == "huggingface.co" else { return nil }
+        let modelURL = sourceURL ?? url
+        guard modelURL.host == "huggingface.co" else { return nil }
         
-        let pathComponents = url.pathComponents
+        let pathComponents = modelURL.pathComponents
         guard pathComponents.count >= 3 else { return nil }
         
         return URL(string: "https://huggingface.co/\(pathComponents[1])/\(pathComponents[2])")
@@ -42,6 +44,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         case name.hasPrefix("ministral"): return "Ministral"
         case name.hasPrefix("rnj"): return "RNJ"
         case name.hasPrefix("moondream"): return "Moondream"
+        case name.hasPrefix("gpt"): return "GPT"
         default: return family
         }
     }
@@ -90,11 +93,12 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
 }
 
 extension DownloadableModel {
-    init(_ family: String, url: URL, versionPrefix: String, inference: InferenceKind) {
+    init(_ family: String, url: URL, sourceURL: URL? = nil, versionPrefix: String, inference: InferenceKind) {
         self.init(
             family: family,
             fileName: versionPrefix,
             url: url,
+            sourceURL: sourceURL,
             quantization: "GGUF",
             sizeBytes: nil,
             inference: inference,

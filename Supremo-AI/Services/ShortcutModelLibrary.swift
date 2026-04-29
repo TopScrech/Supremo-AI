@@ -75,6 +75,7 @@ struct ShortcutModelLibrary {
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedFileName.localizedStandardContains("gpt-oss") || lowercasedFileName.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mistral") || lowercasedFileName.localizedStandardContains("ministral") { return .mistral }

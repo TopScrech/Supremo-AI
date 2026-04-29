@@ -3,11 +3,16 @@ import Foundation
 struct ModelCatalog {
     static let featured: [DownloadableModel] = [
         model("Llama 3.2 Instruct 1B", url: "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF", versionPrefix: "Llama-3.2-1B-Instruct", inference: .llama),
-        model("Gemma 4 E2B Instruct", url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF", versionPrefix: "gemma-4-E2B-it", inference: .gemma),
-        model("Gemma 4 E4B Instruct", url: "https://huggingface.co/dragonboat/gemma-4-E4B-it-GGUF", versionPrefix: "gemma-4-E4B-it", inference: .gemma),
-        model("Gemma 3 1B Instruct", url: "https://huggingface.co/matrixportalx/gemma-3-1b-it-GGUF", versionPrefix: "gemma-3-1b-it", inference: .gemma),
+        model("Gemma 4 E2B Instruct", url: "https://lmstudio.ai/models/google/gemma-4-e2b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-4-E2B-it-GGUF", versionPrefix: "gemma-4-E2B-it", inference: .gemma),
+        model("Gemma 4 E4B Instruct", url: "https://lmstudio.ai/models/google/gemma-4-e4b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-4-E4B-it-GGUF", versionPrefix: "gemma-4-E4B-it", inference: .gemma),
+        model("Gemma 3 12B Instruct", url: "https://lmstudio.ai/models/google/gemma-3-12b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-3-12b-it-GGUF", versionPrefix: "gemma-3-12b-it", inference: .gemma),
+        model("Gemma 3 4B Instruct", url: "https://lmstudio.ai/models/google/gemma-3-4b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-3-4b-it-GGUF", versionPrefix: "gemma-3-4b-it", inference: .gemma),
+        model("Gemma 3 1B Instruct", url: "https://lmstudio.ai/models/google/gemma-3-1b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-3-1B-it-qat-GGUF", versionPrefix: "gemma-3-1b-it", inference: .gemma),
+        model("Gemma 2 9B", url: "https://lmstudio.ai/models/google/gemma-2-9b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-2-9b-it-GGUF", versionPrefix: "gemma-2-9b-it", inference: .gemma),
         model("Gemma 2 2B", url: "https://huggingface.co/guinmoon/LLMFarm_Models", versionPrefix: "gemma 2b_it_v2", inference: .gemma),
         model("Qwen3.6 35B A3B", url: "https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF", versionPrefix: "Qwen_Qwen3.6-35B-A3B", inference: .qwen),
+        model("Qwen3.5 4B", url: "https://huggingface.co/lmstudio-community/Qwen3.5-4B-GGUF", versionPrefix: "Qwen3.5-4B", inference: .qwen),
+        model("Qwen3.5 9B", url: "https://lmstudio.ai/models/qwen/qwen3.5-9b", sourceURL: "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF", versionPrefix: "Qwen3.5-9B", inference: .qwen),
         model("DeepSeek R1 0528 Qwen3 8B", url: "https://huggingface.co/guynich/DeepSeek-R1-0528-Qwen3-8B_Q4_K_M", versionPrefix: "deepseek-r1-0528-qwen3-8b", inference: .deepseek),
         model("Nemotron 3 Nano 4B", url: "https://huggingface.co/lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF", versionPrefix: "NVIDIA-Nemotron-3-Nano-4B", inference: .nemotron),
         model("LFM2.5 1.2B Instruct", url: "https://huggingface.co/lmstudio-community/LFM2.5-1.2B-Instruct-GGUF", versionPrefix: "LFM2.5-1.2B-Instruct", inference: .lfm2),
@@ -18,15 +23,23 @@ struct ModelCatalog {
         model("Phi-4 Mini Reasoning", url: "https://huggingface.co/lmstudio-community/Phi-4-mini-reasoning-GGUF", versionPrefix: "Phi-4-mini-reasoning", inference: .phi),
         model("Phi-4 Reasoning Plus", url: "https://huggingface.co/lmstudio-community/Phi-4-reasoning-plus-GGUF", versionPrefix: "Phi-4-reasoning-plus", inference: .phi),
         model("Phi-4", url: "https://huggingface.co/lmstudio-community/phi-4-GGUF", versionPrefix: "phi-4", inference: .phi),
+        model("GPT OSS 20B", url: "https://lmstudio.ai/models/openai/gpt-oss-20b", sourceURL: "https://huggingface.co/lmstudio-community/gpt-oss-20b-GGUF", versionPrefix: "gpt-oss-20b", inference: .gptOSS),
         model("Bunny 1.0 4B", url: "https://huggingface.co/guinmoon/Bunny-v1_0-4B-GGUF", versionPrefix: "Bunny-v1_0-4B", inference: .llava),
         model("Moondream 2", url: "https://huggingface.co/moondream/moondream2-gguf", versionPrefix: "moondream2-text-model", inference: .moondream)
     ]
     
-    private static func model(_ family: String, url: String, versionPrefix: String, inference: InferenceKind) -> DownloadableModel {
+    private static func model(_ family: String, url: String, sourceURL: String? = nil, versionPrefix: String, inference: InferenceKind) -> DownloadableModel {
         guard let url = URL(string: url) else {
             preconditionFailure("Invalid model URL")
         }
         
-        return DownloadableModel(family, url: url, versionPrefix: versionPrefix, inference: inference)
+        let sourceURL = sourceURL.map {
+            guard let url = URL(string: $0) else {
+                preconditionFailure("Invalid source URL")
+            }
+
+            return url
+        }
+        return DownloadableModel(family, url: url, sourceURL: sourceURL, versionPrefix: versionPrefix, inference: inference)
     }
 }

@@ -120,7 +120,7 @@ final class ChatAppModel {
     
     func downloadableVersions(for model: DownloadableModel) async throws -> [DownloadableModel] {
         let metadata = try await huggingFaceModelMetadata(for: model)
-        guard let modelID = huggingFaceModelID(from: model.url) else {
+        guard let modelID = huggingFaceModelID(from: model.sourceURL ?? model.url) else {
             throw URLError(.unsupportedURL)
         }
         
@@ -737,6 +737,7 @@ final class ChatAppModel {
                 family: catalogModel.family,
                 fileName: fileName,
                 url: url,
+                sourceURL: catalogModel.sourceURL,
                 quantization: ModelQuantization.value(from: fileName),
                 sizeBytes: nil,
                 inference: catalogModel.inference
@@ -748,6 +749,7 @@ final class ChatAppModel {
             family: model.displayName,
             fileName: fileName,
             url: remoteURL,
+            sourceURL: nil,
             quantization: model.quantization,
             sizeBytes: nil,
             inference: model.family
@@ -811,7 +813,7 @@ final class ChatAppModel {
     }
     
     private func huggingFaceModelMetadata(for model: DownloadableModel) async throws -> HuggingFaceModelMetadata {
-        try await huggingFaceModelMetadata(for: model.url)
+        try await huggingFaceModelMetadata(for: model.sourceURL ?? model.url)
     }
     
     private func huggingFaceModelMetadata(for url: URL) async throws -> HuggingFaceModelMetadata {
@@ -853,6 +855,7 @@ final class ChatAppModel {
             family: model.family,
             fileName: sibling.rfilename,
             url: url,
+            sourceURL: model.sourceURL,
             quantization: ModelQuantization.value(from: sibling.rfilename),
             sizeBytes: sibling.resolvedSizeBytes,
             inference: model.inference
@@ -969,6 +972,7 @@ final class ChatAppModel {
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedFileName.localizedStandardContains("gpt-oss") || lowercasedFileName.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mixtral") { return .mixtral }
@@ -1027,6 +1031,7 @@ private struct HuggingFaceModelMetadata: Decodable {
         if lowercasedValue.localizedStandardContains("gemma") { return .gemma }
         if lowercasedValue.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedValue.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedValue.localizedStandardContains("gpt-oss") || lowercasedValue.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedValue.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedValue.localizedStandardContains("phi") { return .phi }
         if lowercasedValue.localizedStandardContains("mixtral") { return .mixtral }
