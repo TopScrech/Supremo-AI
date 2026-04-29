@@ -15,8 +15,4 @@ struct ChatMessage: Identifiable, Codable, Equatable {
         self.createdAt = createdAt
         self.attachmentName = attachmentName
     }
-    
-    var isFullyRevealed: Bool {
-        text == (targetText ?? text)
-    }
 }
