@@ -584,11 +584,6 @@ final class ChatAppModel {
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
             let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama)
             modelFiles.append(model)
-            if let selectedChat, selectedChat.modelFileID == nil {
-                Task {
-                    await assignModel(model, to: selectedChat)
-                }
-            }
             logger.info("Imported \(model.fileName, privacy: .public)")
             persistStatus()
         } catch {
@@ -608,10 +603,8 @@ final class ChatAppModel {
             family: metadata?.inferenceKind ?? downloadableModel.inference,
             promptTemplate: metadata?.cardData?.promptTemplate
         )
+        
         modelFiles.append(model)
-        if let selectedChat, selectedChat.modelFileID == nil {
-            await assignModel(model, to: selectedChat)
-        }
         logger.info("Added \(downloadableModel.fileName, privacy: .public)")
         refreshDownloadCapacityErrorMessages()
         persistStatus()
