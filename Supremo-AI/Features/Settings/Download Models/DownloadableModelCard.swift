@@ -24,7 +24,7 @@ struct DownloadableModelCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(model.familyName)
+                    Text(model.family)
                         .headline()
                     
                     if !model.supportsVersionSelection {

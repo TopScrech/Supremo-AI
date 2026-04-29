@@ -54,7 +54,7 @@ struct ShortcutModelLibrary {
         let catalogModel = catalogModel(for: completeFileName)
 
         return ModelFile(
-            displayName: catalogModel?.familyName ?? displayName,
+            displayName: catalogModel?.family ?? displayName,
             fileName: url.lastPathComponent,
             localURL: url,
             remoteURL: catalogModel?.downloadURL(for: completeFileName),

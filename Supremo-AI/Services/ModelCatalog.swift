@@ -27,6 +27,6 @@ struct ModelCatalog {
             preconditionFailure("Invalid model URL")
         }
         
-        return DownloadableModel(familyName: family, repositoryURL: url, versionPrefix: versionPrefix, inference: inference)
+        return DownloadableModel(family: family, url: url, versionPrefix: versionPrefix, inference: inference)
     }
 }

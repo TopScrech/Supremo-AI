@@ -2,7 +2,7 @@ import Foundation
 
 struct DownloadableModel: Identifiable, Codable, Equatable {
     var id = UUID()
-    var familyName: String
+    var family: String
     var fileName: String
     var url: URL
     var quantization: String
@@ -28,7 +28,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     }
     
     var familyDisplayName: String {
-        let name = familyName.lowercased()
+        let name = family.lowercased()
         
         switch true {
         case name.hasPrefix("gemma"): return "Gemma"
@@ -42,7 +42,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         case name.hasPrefix("ministral"): return "Ministral"
         case name.hasPrefix("rnj"): return "RNJ"
         case name.hasPrefix("moondream"): return "Moondream"
-        default: return familyName
+        default: return family
         }
     }
     
@@ -89,11 +89,11 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
 }
 
 extension DownloadableModel {
-    init(familyName: String, repositoryURL: URL, versionPrefix: String, inference: InferenceKind) {
+    init(family: String, url: URL, versionPrefix: String, inference: InferenceKind) {
         self.init(
-            familyName: familyName,
+            family: family,
             fileName: versionPrefix,
-            url: repositoryURL,
+            url: url,
             quantization: "GGUF",
             sizeBytes: nil,
             inference: inference,

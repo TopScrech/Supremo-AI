@@ -600,7 +600,7 @@ final class ChatAppModel {
         let metadata = try? await huggingFaceModelMetadata(for: downloadableModel)
         modelFiles.removeAll { $0.fileName == downloadableModel.fileName || $0.fileName == "\(downloadableModel.fileName).download" }
         let model = ModelFile(
-            displayName: downloadableModel.familyName,
+            displayName: downloadableModel.family,
             fileName: downloadableModel.fileName,
             localURL: localURL,
             remoteURL: downloadableModel.url,
@@ -631,7 +631,7 @@ final class ChatAppModel {
     private func startContinuedProcessingDownload(_ model: DownloadableModel) {
         BackgroundModelDownloadScheduler.shared.schedule(
             title: "Downloading Model",
-            subtitle: model.familyName
+            subtitle: model.family
         ) { [weak self] progress in
             await self?.performDownload(model, progress: progress) ?? false
         }
@@ -745,7 +745,7 @@ final class ChatAppModel {
         if let catalogModel = catalogModel(for: fileName),
            let url = catalogModel.downloadURL(for: fileName) {
             return DownloadableModel(
-                familyName: catalogModel.familyName,
+                family: catalogModel.family,
                 fileName: fileName,
                 url: url,
                 quantization: ModelQuantization.value(from: fileName),
@@ -756,7 +756,7 @@ final class ChatAppModel {
         
         guard let remoteURL = model.remoteURL else { return nil }
         return DownloadableModel(
-            familyName: model.displayName,
+            family: model.displayName,
             fileName: fileName,
             url: remoteURL,
             quantization: model.quantization,
@@ -861,7 +861,7 @@ final class ChatAppModel {
         ])
 
         return DownloadableModel(
-            familyName: model.familyName,
+            family: model.family,
             fileName: sibling.rfilename,
             url: url,
             quantization: ModelQuantization.value(from: sibling.rfilename),
@@ -962,7 +962,7 @@ final class ChatAppModel {
         let catalogModel = catalogModel(for: completeFileName)
         
         return ModelFile(
-            displayName: catalogModel?.familyName ?? displayName,
+            displayName: catalogModel?.family ?? displayName,
             fileName: url.lastPathComponent,
             localURL: url,
             remoteURL: catalogModel?.downloadURL(for: completeFileName),
