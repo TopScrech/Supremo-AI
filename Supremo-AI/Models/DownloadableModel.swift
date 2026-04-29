@@ -61,6 +61,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     func matchesVersionFileName(_ fileName: String) -> Bool {
         guard fileName.hasSuffix(".gguf") else { return false }
         guard let versionPrefix else { return self.fileName == fileName }
+        
         return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
     }
     
