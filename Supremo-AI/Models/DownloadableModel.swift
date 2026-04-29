@@ -90,7 +90,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
 }
 
 extension DownloadableModel {
-    init(family: String, url: URL, versionPrefix: String, inference: InferenceKind) {
+    init(_ family: String, url: URL, versionPrefix: String, inference: InferenceKind) {
         self.init(
             family: family,
             fileName: versionPrefix,
