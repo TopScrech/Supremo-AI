@@ -52,10 +52,10 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     
     var versionSelectionID: String {
         if supportsVersionSelection, let huggingFaceModelCardURL {
-            return huggingFaceModelCardURL.absoluteString
+            huggingFaceModelCardURL.absoluteString
+        } else {
+            fileName
         }
-        
-        return fileName
     }
     
     func matchesVersionFileName(_ fileName: String) -> Bool {
