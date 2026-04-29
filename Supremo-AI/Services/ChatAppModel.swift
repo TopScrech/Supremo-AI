@@ -111,12 +111,6 @@ final class ChatAppModel {
         return nil
     }
     
-    func refreshDownloadSizes() async {
-        for model in downloadableModels where model.sizeBytes == nil {
-            await refreshDownloadSize(for: model)
-        }
-    }
-    
     func isMarkedNotForAllAudiences(_ model: DownloadableModel) async -> Bool {
         do {
             let metadata = try await huggingFaceModelMetadata(for: model)

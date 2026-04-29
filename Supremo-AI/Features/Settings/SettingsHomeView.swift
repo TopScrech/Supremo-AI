@@ -23,7 +23,7 @@ struct SettingsHomeView: View {
         TabView(selection: $selectedScreen) {
             ForEach(SettingsScreen.allCases) { screen in
                 Tab(screen.label, systemImage: screen.systemImage, value: screen) {
-                    SettingsDetailView(screen: screen)
+                    SettingsDetailView(screen)
                 }
             }
         }

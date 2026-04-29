@@ -18,8 +18,5 @@ struct DownloadableModelList: View {
             }
         }
         .scrollIndicators(.never)
-        .task {
-            await appModel.refreshDownloadSizes()
-        }
     }
 }
