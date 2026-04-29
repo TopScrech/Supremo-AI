@@ -71,12 +71,16 @@ struct ModelFileCard: View {
                             dismiss()
                         }
                     }
+#if !os(visionOS)
                     .buttonStyle(.glass)
+#endif
                     .foregroundStyle(.foreground)
                 }
             } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
                 Button("Continue Download", action: continueDownload)
+#if !os(visionOS)
                     .buttonStyle(.glassProminent)
+#endif
                     .padding(.top, 5)
             }
         }

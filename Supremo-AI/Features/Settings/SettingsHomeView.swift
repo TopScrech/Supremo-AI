@@ -20,18 +20,14 @@ struct SettingsHomeView: View {
         }
         .frame(minWidth: 720, minHeight: 520)
 #else
-        settingsContent
-#endif
-    }
-    
-    private var settingsContent: some View {
         TabView(selection: $selectedScreen) {
             ForEach(SettingsScreen.allCases) { screen in
                 Tab(screen.label, systemImage: screen.systemImage, value: screen) {
-                    SettingsDetailView(screen: screen)
+                    SettingsDetailView(screen)
                 }
             }
         }
         .navigationTitle(selectedScreen.label)
+#endif
     }
 }

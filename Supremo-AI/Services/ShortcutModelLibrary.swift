@@ -51,17 +51,23 @@ struct ShortcutModelLibrary {
         let isPartialDownload = url.lastPathComponent.hasSuffix(".download")
         let completeFileName = isPartialDownload ? String(url.lastPathComponent.dropLast(".download".count)) : url.lastPathComponent
         let displayName = URL(filePath: completeFileName).deletingPathExtension().lastPathComponent
-        let catalogModel = ModelCatalog.featured.first { $0.fileName == completeFileName }
+        let catalogModel = catalogModel(for: completeFileName)
 
         return ModelFile(
-            displayName: catalogModel?.familyName ?? displayName,
+            displayName: catalogModel?.family ?? displayName,
             fileName: url.lastPathComponent,
             localURL: url,
-            remoteURL: catalogModel?.url,
-            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? ModelQuantization.value(from: completeFileName, fallback: "Local"),
+            remoteURL: catalogModel?.downloadURL(for: completeFileName),
+            quantization: isPartialDownload ? "Partial" : ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
             isPartialDownload: isPartialDownload
         )
+    }
+    
+    private func catalogModel(for fileName: String) -> DownloadableModel? {
+        ModelCatalog.featured.first {
+            $0.fileName == fileName || $0.matchesVersionFileName(fileName)
+        }
     }
 
     private func inferredInferenceKind(from fileName: String) -> InferenceKind {
@@ -69,6 +75,7 @@ struct ShortcutModelLibrary {
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedFileName.localizedStandardContains("gpt-oss") || lowercasedFileName.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mistral") || lowercasedFileName.localizedStandardContains("ministral") { return .mistral }

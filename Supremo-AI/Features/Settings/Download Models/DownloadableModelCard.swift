@@ -24,7 +24,7 @@ struct DownloadableModelCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(model.familyName)
+                    Text(model.family)
                         .headline()
                     
                     if !model.supportsVersionSelection {
@@ -65,7 +65,9 @@ struct DownloadableModelCard: View {
                     .foregroundStyle(.green)
                     .headline()
                     .disabled(true)
+#if !os(visionOS)
                     .buttonStyle(.glassProminent)
+#endif
                     .buttonBorderShape(.circle)
                 
             } else if downloadState?.isDownloading != true {
@@ -77,7 +79,9 @@ struct DownloadableModelCard: View {
                     }
                 }
                 .disabled((capacityErrorMessage != nil && !model.supportsVersionSelection) || isCheckingNotForAllAudiences)
+#if !os(visionOS)
                 .buttonStyle(.glassProminent)
+#endif
                 .buttonBorderShape(.circle)
             }
         }

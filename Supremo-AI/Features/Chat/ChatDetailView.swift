@@ -83,9 +83,9 @@ struct ChatDetailView: View {
                     }
                 }
             }
-            
+#if !os(visionOS)
             ToolbarSpacer()
-            
+#endif
             ToolbarItemGroup {
                 if appModel.isModelInitialized(for: chat) {
                     Button("Eject Model", systemImage: "eject", action: ejectModel)

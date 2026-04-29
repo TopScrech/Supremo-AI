@@ -2,13 +2,15 @@ import Foundation
 
 struct DownloadableModel: Identifiable, Codable, Equatable {
     var id = UUID()
-    var familyName: String
+    var family: String
     var fileName: String
     var url: URL
+    var sourceURL: URL? = nil
     var quantization: String
     var sizeBytes: Int?
     var inference: InferenceKind
-
+    var versionPrefix: String? = nil
+    
     var displaySize: String {
         if let sizeBytes {
             sizeBytes.formatted(.byteCount(style: .file))
@@ -18,17 +20,18 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     }
     
     var huggingFaceModelCardURL: URL? {
-        guard url.host == "huggingface.co" else { return nil }
+        let modelURL = sourceURL ?? url
+        guard modelURL.host == "huggingface.co" else { return nil }
         
-        let pathComponents = url.pathComponents
+        let pathComponents = modelURL.pathComponents
         guard pathComponents.count >= 3 else { return nil }
         
         return URL(string: "https://huggingface.co/\(pathComponents[1])/\(pathComponents[2])")
     }
-
+    
     var familyDisplayName: String {
-        let name = familyName.lowercased()
-
+        let name = family.lowercased()
+        
         switch true {
         case name.hasPrefix("gemma"): return "Gemma"
         case name.hasPrefix("phi"): return "Phi"
@@ -41,19 +44,65 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         case name.hasPrefix("ministral"): return "Ministral"
         case name.hasPrefix("rnj"): return "RNJ"
         case name.hasPrefix("moondream"): return "Moondream"
-        default: return familyName
+        case name.hasPrefix("gpt"): return "GPT"
+        default: return family
         }
     }
-
+    
     var supportsVersionSelection: Bool {
-        huggingFaceModelCardURL != nil
+        huggingFaceModelCardURL != nil && versionPrefix != nil
     }
-
+    
     var versionSelectionID: String {
         if supportsVersionSelection, let huggingFaceModelCardURL {
-            return huggingFaceModelCardURL.absoluteString
+            huggingFaceModelCardURL.absoluteString
+        } else {
+            fileName
         }
+    }
+    
+    func matchesVersionFileName(_ fileName: String) -> Bool {
+        guard fileName.hasSuffix(".gguf") else { return false }
+        guard let versionPrefix else { return self.fileName == fileName }
+        
+        return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
+    }
+    
+    func downloadURL(for fileName: String) -> URL? {
+        if self.fileName == fileName {
+            return url
+        }
+        
+        guard let huggingFaceModelCardURL else { return nil }
+        
+        return huggingFaceModelCardURL
+            .appending(path: "resolve/main")
+            .appending(path: fileName)
+            .appending(queryItems: [
+                URLQueryItem(name: "download", value: "true")
+            ])
+    }
+    
+    private func normalizedVersionFileName(_ fileName: String) -> String {
+        fileName.lowercased()
+            .replacing(" ", with: "")
+            .replacing("-", with: "")
+            .replacing("_", with: "")
+            .replacing(".", with: "")
+    }
+}
 
-        return fileName
+extension DownloadableModel {
+    init(_ family: String, url: URL, sourceURL: URL? = nil, versionPrefix: String, inference: InferenceKind) {
+        self.init(
+            family: family,
+            fileName: versionPrefix,
+            url: url,
+            sourceURL: sourceURL,
+            quantization: "GGUF",
+            sizeBytes: nil,
+            inference: inference,
+            versionPrefix: versionPrefix
+        )
     }
 }

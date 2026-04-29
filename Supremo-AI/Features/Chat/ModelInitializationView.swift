@@ -16,12 +16,15 @@ struct ModelInitializationView: View {
         } actions: {
             HStack {
                 Button("Chat Settings", systemImage: "slider.horizontal.3", action: editAction)
+                    .disabled(state == .initializing)
+#if !os(visionOS)
                     .buttonStyle(.glass)
-                    .disabled(state == .initializing)
-                
+#endif
                 Button(buttonTitle, systemImage: buttonImage, action: initializeAction)
-                    .buttonStyle(.glassProminent)
                     .disabled(state == .initializing)
+#if !os(visionOS)
+                    .buttonStyle(.glassProminent)
+#endif
             }
         }
     }

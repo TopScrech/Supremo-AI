@@ -7,8 +7,6 @@ struct DownloadableModelList: View {
         List {
             DownloadStorageSummary()
             
-            Text("When the first model finishes, it is assigned to the current chat automatically")
-            
             ForEach(appModel.downloadableModelFamilies) { family in
                 Section(family.name) {
                     ForEach(family.models) {
@@ -18,8 +16,5 @@ struct DownloadableModelList: View {
             }
         }
         .scrollIndicators(.never)
-        .task {
-            await appModel.refreshDownloadSizes()
-        }
     }
 }

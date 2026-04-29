@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct SettingsDetailView: View {
-    let screen: SettingsScreen
+    private let screen: SettingsScreen
+    
+    init(_ screen: SettingsScreen) {
+        self.screen = screen
+    }
     
     var body: some View {
         switch screen {

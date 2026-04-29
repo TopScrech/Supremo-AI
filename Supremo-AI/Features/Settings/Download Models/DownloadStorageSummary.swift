@@ -24,10 +24,4 @@ struct DownloadStorageSummary: View {
         
         return bytes.formatted(.byteCount(style: .file))
     }
-    
-    private func formattedByteCount(_ bytes: UInt64?) -> String {
-        guard let bytes else { return "Unavailable" }
-        
-        return bytes.formatted(.byteCount(style: .file))
-    }
 }

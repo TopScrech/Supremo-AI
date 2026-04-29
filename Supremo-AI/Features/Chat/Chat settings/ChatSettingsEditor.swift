@@ -12,37 +12,14 @@ struct ChatSettingsEditor: View {
     }
     
     var body: some View {
-        VStack {
-            Picker("Section", selection: $section) {
-                ForEach(ChatSettingsSection.allCases) {
-                    Text($0.label)
-                        .tag($0)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-            
-            Form {
-                switch section {
-                case .basic:
-                    BasicChatSettings($draft)
-                    
-                case .prediction:
-                    PredictionSettingsSection($draft.settings.prediction)
-                    
-                case .prompt:
-                    PromptSettingsSection($draft.settings.prompt)
-                    
-                case .sampling:
-                    SamplingSettingsSection($draft.settings.sampling)
-                    
-                case .rag:
-                    RAGSettingsSection($draft)
+        TabView(selection: $section) {
+            ForEach(ChatSettingsSection.allCases) { section in
+                Tab(section.label, systemImage: section.systemImage, value: section) {
+                    ChatSettingsSectionContent(section: section, chat: $draft)
                 }
             }
         }
         .navigationTitle(section.label)
-        .scrollIndicators(.never)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", systemImage: "xmark") {

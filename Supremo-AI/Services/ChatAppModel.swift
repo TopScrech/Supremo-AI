@@ -60,7 +60,7 @@ final class ChatAppModel {
             if model.supportsVersionSelection {
                 guard versionSelectionIDs.insert(model.versionSelectionID).inserted else { continue }
             }
-
+            
             if let index = families.firstIndex(where: { $0.name == model.familyDisplayName }) {
                 families[index].models.append(model)
             } else {
@@ -69,10 +69,6 @@ final class ChatAppModel {
         }
         
         return families
-    }
-    
-    func canDownload(_ model: DownloadableModel) -> Bool {
-        downloadCapacityErrorMessage(for: model) == nil
     }
     
     func downloadCapacityErrorMessage(for model: DownloadableModel) -> String? {
@@ -111,12 +107,6 @@ final class ChatAppModel {
         return nil
     }
     
-    func refreshDownloadSizes() async {
-        for model in downloadableModels where model.sizeBytes == nil {
-            await refreshDownloadSize(for: model)
-        }
-    }
-    
     func isMarkedNotForAllAudiences(_ model: DownloadableModel) async -> Bool {
         do {
             let metadata = try await huggingFaceModelMetadata(for: model)
@@ -127,15 +117,15 @@ final class ChatAppModel {
             return false
         }
     }
-
+    
     func downloadableVersions(for model: DownloadableModel) async throws -> [DownloadableModel] {
         let metadata = try await huggingFaceModelMetadata(for: model)
-        guard let modelID = huggingFaceModelID(from: model.url) else {
+        guard let modelID = huggingFaceModelID(from: model.sourceURL ?? model.url) else {
             throw URLError(.unsupportedURL)
         }
-
+        
         return metadata.siblings
-            .filter { isVersionSibling($0.rfilename, for: model.fileName) }
+            .filter { model.matchesVersionFileName($0.rfilename) }
             .compactMap {
                 downloadableModelVersion(from: $0, model: model, modelID: modelID)
             }
@@ -286,7 +276,7 @@ final class ChatAppModel {
             logger.info("Finish downloading \(model.fileName, privacy: .public) before using it")
             return
         }
-
+        
         let model = ggufTemplateEnrichedModel(await metadataEnrichedModel(model))
         var updated = chat
         updated.modelFileID = model.id
@@ -590,11 +580,6 @@ final class ChatAppModel {
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
             let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama)
             modelFiles.append(model)
-            if let selectedChat, selectedChat.modelFileID == nil {
-                Task {
-                    await assignModel(model, to: selectedChat)
-                }
-            }
             logger.info("Imported \(model.fileName, privacy: .public)")
             persistStatus()
         } catch {
@@ -606,7 +591,7 @@ final class ChatAppModel {
         let metadata = try? await huggingFaceModelMetadata(for: downloadableModel)
         modelFiles.removeAll { $0.fileName == downloadableModel.fileName || $0.fileName == "\(downloadableModel.fileName).download" }
         let model = ModelFile(
-            displayName: downloadableModel.familyName,
+            displayName: downloadableModel.family,
             fileName: downloadableModel.fileName,
             localURL: localURL,
             remoteURL: downloadableModel.url,
@@ -614,10 +599,8 @@ final class ChatAppModel {
             family: metadata?.inferenceKind ?? downloadableModel.inference,
             promptTemplate: metadata?.cardData?.promptTemplate
         )
+        
         modelFiles.append(model)
-        if let selectedChat, selectedChat.modelFileID == nil {
-            await assignModel(model, to: selectedChat)
-        }
         logger.info("Added \(downloadableModel.fileName, privacy: .public)")
         refreshDownloadCapacityErrorMessages()
         persistStatus()
@@ -637,7 +620,7 @@ final class ChatAppModel {
     private func startContinuedProcessingDownload(_ model: DownloadableModel) {
         BackgroundModelDownloadScheduler.shared.schedule(
             title: "Downloading Model",
-            subtitle: model.familyName
+            subtitle: model.family
         ) { [weak self] progress in
             await self?.performDownload(model, progress: progress) ?? false
         }
@@ -748,15 +731,25 @@ final class ChatAppModel {
     private func downloadableModel(forPartialDownload model: ModelFile) -> DownloadableModel? {
         let fileName = completeFileName(forPartialDownload: model)
         
-        if let catalogModel = downloadableModels.first(where: { $0.fileName == fileName }) {
-            return catalogModel
+        if let catalogModel = catalogModel(for: fileName),
+           let url = catalogModel.downloadURL(for: fileName) {
+            return DownloadableModel(
+                family: catalogModel.family,
+                fileName: fileName,
+                url: url,
+                sourceURL: catalogModel.sourceURL,
+                quantization: ModelQuantization.value(from: fileName),
+                sizeBytes: nil,
+                inference: catalogModel.inference
+            )
         }
         
         guard let remoteURL = model.remoteURL else { return nil }
         return DownloadableModel(
-            familyName: model.displayName,
+            family: model.displayName,
             fileName: fileName,
             url: remoteURL,
+            sourceURL: nil,
             quantization: model.quantization,
             sizeBytes: nil,
             inference: model.family
@@ -820,7 +813,7 @@ final class ChatAppModel {
     }
     
     private func huggingFaceModelMetadata(for model: DownloadableModel) async throws -> HuggingFaceModelMetadata {
-        try await huggingFaceModelMetadata(for: model.url)
+        try await huggingFaceModelMetadata(for: model.sourceURL ?? model.url)
     }
     
     private func huggingFaceModelMetadata(for url: URL) async throws -> HuggingFaceModelMetadata {
@@ -850,39 +843,25 @@ final class ChatAppModel {
         huggingFaceMetadataCache[modelID] = metadata
         return metadata
     }
-
+    
     private func downloadableModelVersion(from sibling: HuggingFaceModelSibling, model: DownloadableModel, modelID: String) -> DownloadableModel? {
         guard let repositoryURL = URL(string: "https://huggingface.co/\(modelID)/resolve/main") else { return nil }
         
         let url = repositoryURL.appending(path: sibling.rfilename).appending(queryItems: [
             URLQueryItem(name: "download", value: "true")
         ])
-
+        
         return DownloadableModel(
-            familyName: model.familyName,
+            family: model.family,
             fileName: sibling.rfilename,
             url: url,
+            sourceURL: model.sourceURL,
             quantization: ModelQuantization.value(from: sibling.rfilename),
             sizeBytes: sibling.resolvedSizeBytes,
             inference: model.inference
         )
     }
-
-    private func isVersionSibling(_ fileName: String, for modelFileName: String) -> Bool {
-        guard fileName.hasSuffix(".gguf") else { return false }
-        let versionPrefix = ModelQuantization.filePrefix(from: modelFileName)
-        guard !versionPrefix.isEmpty else { return true }
-        return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
-    }
-
-    private func normalizedVersionFileName(_ fileName: String) -> String {
-        fileName.lowercased()
-            .replacing(" ", with: "")
-            .replacing("-", with: "")
-            .replacing("_", with: "")
-            .replacing(".", with: "")
-    }
-
+    
     private func metadataEnrichedModel(_ model: ModelFile) async -> ModelFile {
         guard let remoteURL = model.remoteURL,
               let metadata = try? await huggingFaceModelMetadata(for: remoteURL) else {
@@ -901,48 +880,44 @@ final class ChatAppModel {
         persistStatus()
         return enrichedModel
     }
-
+    
     private func ggufTemplateEnrichedModel(_ model: ModelFile) -> ModelFile {
         guard let localURL = model.localURL,
               let promptTemplate = GGUFPromptTemplateReader.promptTemplate(from: localURL) else {
             return model
         }
-
+        
         var enrichedModel = model
         enrichedModel.ggufPromptTemplate = promptTemplate
-
+        
         guard let index = modelFiles.firstIndex(where: { $0.id == model.id }) else {
             return enrichedModel
         }
-
+        
         modelFiles[index] = enrichedModel
         persistStatus()
         return enrichedModel
     }
     
     private func fileSize(for url: URL) -> Int {
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path()),
-              let fileSize = attributes[.size] as? NSNumber else { return 0 }
+        guard
+            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path()),
+            let fileSize = attributes[.size] as? NSNumber
+        else {
+            return 0
+        }
+        
         return fileSize.intValue
     }
     
-    func applyTemplate(_ template: ChatSettingsTemplate, to chat: ChatConfiguration) {
-        var updated = chat
-        updated.applyTemplate(template)
-        updateChat(updated)
-    }
-    
-    func responseForShortcut(prompt: String, chatID: UUID?) async -> String {
-        if let chatID {
-            selectedChatID = chatID
-        }
-        await sendPrompt(prompt, useRAG: true)
-        return selectedChat?.messages.last?.text ?? ""
-    }
-    
     private var currentChatIndex: Int? {
-        guard let selectedChatID else { return chats.indices.first }
-        return chats.firstIndex { $0.id == selectedChatID }
+        guard let selectedChatID else {
+            return chats.indices.first
+        }
+        
+        return chats.firstIndex {
+            $0.id == selectedChatID
+        }
     }
     
     private func refreshModelFilesFromDisk() {
@@ -972,24 +947,32 @@ final class ChatAppModel {
         let isPartialDownload = url.lastPathComponent.hasSuffix(".download")
         let completeFileName = isPartialDownload ? String(url.lastPathComponent.dropLast(".download".count)) : url.lastPathComponent
         let displayName = URL(filePath: completeFileName).deletingPathExtension().lastPathComponent
-        let catalogModel = downloadableModels.first { $0.fileName == completeFileName }
+        let catalogModel = catalogModel(for: completeFileName)
         
         return ModelFile(
-            displayName: catalogModel?.familyName ?? displayName,
+            displayName: catalogModel?.family ?? displayName,
             fileName: url.lastPathComponent,
             localURL: url,
-            remoteURL: catalogModel?.url,
-            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? ModelQuantization.value(from: completeFileName, fallback: "Local"),
+            remoteURL: catalogModel?.downloadURL(for: completeFileName),
+            quantization: isPartialDownload ? "Partial" : ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
             isPartialDownload: isPartialDownload
         )
     }
     
+    private func catalogModel(for fileName: String) -> DownloadableModel? {
+        downloadableModels.first {
+            $0.fileName == fileName || $0.matchesVersionFileName(fileName)
+        }
+    }
+    
     private func inferredInferenceKind(from fileName: String) -> InferenceKind {
         let lowercasedFileName = fileName.lowercased()
+        
         if lowercasedFileName.localizedStandardContains("gemma") { return .gemma }
         if lowercasedFileName.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedFileName.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedFileName.localizedStandardContains("gpt-oss") || lowercasedFileName.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedFileName.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedFileName.localizedStandardContains("phi") { return .phi }
         if lowercasedFileName.localizedStandardContains("mixtral") { return .mixtral }
@@ -1000,6 +983,7 @@ final class ChatAppModel {
         if lowercasedFileName.localizedStandardContains("moondream") { return .moondream }
         if lowercasedFileName.localizedStandardContains("starcoder") { return .starcoder }
         if lowercasedFileName.localizedStandardContains("falcon") { return .falcon }
+        
         return .llama
     }
     
@@ -1035,6 +1019,7 @@ private struct HuggingFaceModelMetadata: Decodable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         gguf = try container.decodeIfPresent(HuggingFaceGGUFMetadata.self, forKey: .gguf)
         cardData = try container.decodeIfPresent(HuggingFaceModelCardData.self, forKey: .cardData)
@@ -1046,6 +1031,7 @@ private struct HuggingFaceModelMetadata: Decodable {
         if lowercasedValue.localizedStandardContains("gemma") { return .gemma }
         if lowercasedValue.localizedStandardContains("deepseek") { return .deepseek }
         if lowercasedValue.localizedStandardContains("qwen") { return .qwen }
+        if lowercasedValue.localizedStandardContains("gpt-oss") || lowercasedValue.localizedStandardContains("gptoss") { return .gptOSS }
         if lowercasedValue.localizedStandardContains("baichuan") { return .baichuan }
         if lowercasedValue.localizedStandardContains("phi") { return .phi }
         if lowercasedValue.localizedStandardContains("mixtral") { return .mixtral }
@@ -1066,7 +1052,7 @@ private struct HuggingFaceModelSibling: Decodable {
     var rfilename: String
     var size: Int?
     var lfs: HuggingFaceModelSiblingLFS?
-
+    
     var resolvedSizeBytes: Int? {
         size ?? lfs?.size
     }
@@ -1092,11 +1078,11 @@ private struct HuggingFaceModelCardData: Decodable {
     var promptTemplate: String?
     
     private enum CodingKeys: String, CodingKey {
-        case tags
-        case baseModel = "base_model"
-        case modelName = "model_name"
-        case modelType = "model_type"
-        case promptTemplate = "prompt_template"
+        case tags,
+             baseModel = "base_model",
+             modelName = "model_name",
+             modelType = "model_type",
+             promptTemplate = "prompt_template"
     }
     
     init(from decoder: Decoder) throws {
@@ -1110,7 +1096,7 @@ private struct HuggingFaceModelCardData: Decodable {
 }
 
 private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate {
-    private static let progressUpdateInterval: TimeInterval = 1
+    private static let progressUpdateInterval = 1.0
     private static let progressUpdateByteInterval = 16 * 1024 * 1024
     
     private let destination: URL
@@ -1195,6 +1181,7 @@ private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate 
         didCompleteWithError error: Error?
     ) {
         try? fileHandle?.close()
+        
         fileHandle = nil
         reportProgress(force: true)
         

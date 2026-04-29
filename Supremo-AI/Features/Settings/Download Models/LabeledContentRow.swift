@@ -18,6 +18,7 @@ struct LabeledContentRow: View {
                 .secondary()
         } label: {
             Label(title, systemImage: systemImage)
+                .foregroundStyle(.foreground)
         }
     }
 }

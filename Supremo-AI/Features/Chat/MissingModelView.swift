@@ -13,11 +13,14 @@ struct MissingModelView: View {
         } actions: {
             HStack {
                 Button("Select Model", systemImage: "slider.horizontal.3", action: editAction)
-                    .buttonStyle(.glass)
                     .foregroundStyle(.foreground)
-                
+#if !os(visionOS)
+                    .buttonStyle(.glass)
+#endif
                 Button("Install Model", systemImage: "arrow.down.circle", action: installAction)
+#if !os(visionOS)
                     .buttonStyle(.glassProminent)
+#endif
             }
         }
     }

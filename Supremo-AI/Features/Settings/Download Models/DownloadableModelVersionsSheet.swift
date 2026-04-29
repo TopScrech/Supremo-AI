@@ -32,7 +32,7 @@ struct DownloadableModelVersionsSheet: View {
                 }
             }
         }
-        .navigationTitle(model.familyName)
+        .navigationTitle(model.family)
         .scrollIndicators(.never)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
