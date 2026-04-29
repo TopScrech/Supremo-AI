@@ -129,7 +129,7 @@ final class ChatAppModel {
         }
 
         return metadata.siblings
-            .filter { isVersionSibling($0.rfilename, for: model.fileName) }
+            .filter { model.matchesVersionFileName($0.rfilename) }
             .compactMap {
                 downloadableModelVersion(from: $0, model: model, modelID: modelID)
             }
@@ -742,8 +742,16 @@ final class ChatAppModel {
     private func downloadableModel(forPartialDownload model: ModelFile) -> DownloadableModel? {
         let fileName = completeFileName(forPartialDownload: model)
         
-        if let catalogModel = downloadableModels.first(where: { $0.fileName == fileName }) {
-            return catalogModel
+        if let catalogModel = catalogModel(for: fileName),
+           let url = catalogModel.downloadURL(for: fileName) {
+            return DownloadableModel(
+                familyName: catalogModel.familyName,
+                fileName: fileName,
+                url: url,
+                quantization: ModelQuantization.value(from: fileName),
+                sizeBytes: nil,
+                inference: catalogModel.inference
+            )
         }
         
         guard let remoteURL = model.remoteURL else { return nil }
@@ -862,21 +870,6 @@ final class ChatAppModel {
         )
     }
 
-    private func isVersionSibling(_ fileName: String, for modelFileName: String) -> Bool {
-        guard fileName.hasSuffix(".gguf") else { return false }
-        let versionPrefix = ModelQuantization.filePrefix(from: modelFileName)
-        guard !versionPrefix.isEmpty else { return true }
-        return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))
-    }
-
-    private func normalizedVersionFileName(_ fileName: String) -> String {
-        fileName.lowercased()
-            .replacing(" ", with: "")
-            .replacing("-", with: "")
-            .replacing("_", with: "")
-            .replacing(".", with: "")
-    }
-
     private func metadataEnrichedModel(_ model: ModelFile) async -> ModelFile {
         guard let remoteURL = model.remoteURL,
               let metadata = try? await huggingFaceModelMetadata(for: remoteURL) else {
@@ -966,17 +959,23 @@ final class ChatAppModel {
         let isPartialDownload = url.lastPathComponent.hasSuffix(".download")
         let completeFileName = isPartialDownload ? String(url.lastPathComponent.dropLast(".download".count)) : url.lastPathComponent
         let displayName = URL(filePath: completeFileName).deletingPathExtension().lastPathComponent
-        let catalogModel = downloadableModels.first { $0.fileName == completeFileName }
+        let catalogModel = catalogModel(for: completeFileName)
         
         return ModelFile(
             displayName: catalogModel?.familyName ?? displayName,
             fileName: url.lastPathComponent,
             localURL: url,
-            remoteURL: catalogModel?.url,
-            quantization: isPartialDownload ? "Partial" : catalogModel?.quantization ?? ModelQuantization.value(from: completeFileName, fallback: "Local"),
+            remoteURL: catalogModel?.downloadURL(for: completeFileName),
+            quantization: isPartialDownload ? "Partial" : ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
             isPartialDownload: isPartialDownload
         )
+    }
+    
+    private func catalogModel(for fileName: String) -> DownloadableModel? {
+        downloadableModels.first {
+            $0.fileName == fileName || $0.matchesVersionFileName(fileName)
+        }
     }
     
     private func inferredInferenceKind(from fileName: String) -> InferenceKind {
