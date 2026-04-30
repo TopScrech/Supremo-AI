@@ -9,12 +9,12 @@ class LlamaModel {
     private let sampler: UnsafeMutablePointer<llama_sampler>
     private var batch: Batch
     private var tokens: [Token]
-    private var generatedTokenAccount: Int32 = 0
+    private var currentTokenPosition: Int32 = 0
+    private var generatedTokenCount: Int32 = 0
     private var ended = false
-    private let n_len: Int32 = 1024
 
     var shouldContinue: Bool {
-        generatedTokenAccount < configuration.maxTokenCount && !ended
+        generatedTokenCount < configuration.maxTokenCount && !ended
     }
 
     init(path: String, configuration: Configuration = .init()) throws {
@@ -67,7 +67,8 @@ class LlamaModel {
     func start(for prompt: Prompt) throws {
         clear()
         ended = false
-        generatedTokenAccount = 0
+        currentTokenPosition = 0
+        generatedTokenCount = 0
         llama_sampler_reset(sampler)
         print("SwiftLlama Gemma4: tokenizing prompt characters=\(prompt.prompt.count)")
         tokens = tokenize(text: prompt.prompt, addBos: true)
@@ -75,31 +76,44 @@ class LlamaModel {
         guard !tokens.isEmpty else {
             throw SwiftLlamaError.others("Prompt tokenization returned no tokens")
         }
-        guard tokens.count <= configuration.batchSize * Configuration.historySize * 2 else {
-            throw SwiftLlamaError.others("Prompt has \(tokens.count) tokens but the batch supports \(configuration.batchSize * Configuration.historySize * 2)")
+        let contextLength = Int(llama_n_ctx(context))
+        guard tokens.count < contextLength else {
+            throw SwiftLlamaError.others("Prompt has \(tokens.count) tokens but the context supports \(contextLength)")
         }
 
-        batch.clear()
-        tokens.enumerated().forEach { index, token in
-            batch.add(token: token, position: Int32(index), seqIDs: [0], logit: false)
-        }
-        batch.logits[Int(batch.n_tokens) - 1] = 1 // true
-
-        print("SwiftLlama Gemma4: starting prompt decode batchTokens=\(batch.n_tokens)")
-        if llama_decode(context, batch) != 0 {
-            throw SwiftLlamaError.decodeError
-        }
+        print("SwiftLlama Gemma4: starting prompt decode tokens=\(tokens.count) batchSize=\(configuration.batchSize)")
+        try decodePromptChunks()
         print("SwiftLlama Gemma4: finished prompt decode")
-        generatedTokenAccount = batch.n_tokens
+        currentTokenPosition = Int32(tokens.count)
+    }
+
+    private func decodePromptChunks() throws {
+        for chunkStart in stride(from: 0, to: tokens.count, by: configuration.batchSize) {
+            let chunkEnd = min(chunkStart + configuration.batchSize, tokens.count)
+            let isLastChunk = chunkEnd == tokens.count
+
+            batch.clear()
+            for index in chunkStart..<chunkEnd {
+                batch.add(token: tokens[index], position: Int32(index), seqIDs: [0], logit: false)
+            }
+            if isLastChunk {
+                batch.logits[Int(batch.n_tokens) - 1] = 1
+            }
+
+            print("SwiftLlama Gemma4: decoding prompt chunk tokens=\(batch.n_tokens)")
+            if llama_decode(context, batch) != 0 {
+                throw SwiftLlamaError.decodeError
+            }
+        }
     }
 
     func `continue`() throws -> String {
-        if generatedTokenAccount == tokens.count {
+        if generatedTokenCount == 0 {
             print("SwiftLlama Gemma4: sampling first response token")
         }
         let newToken = llama_sampler_sample(sampler, context, batch.n_tokens - 1)
 
-        if llama_vocab_is_eog(vocab, newToken) || generatedTokenAccount == n_len {
+        if llama_vocab_is_eog(vocab, newToken) || currentTokenPosition >= Int32(llama_n_ctx(context)) {
             ended = true
             return ""
         }
@@ -107,16 +121,17 @@ class LlamaModel {
         let piece = tokenToString(token: newToken)
 
         batch.clear()
-        batch.add(token: newToken, position: generatedTokenAccount, seqIDs: [0], logit: true)
-        generatedTokenAccount += 1
+        batch.add(token: newToken, position: currentTokenPosition, seqIDs: [0], logit: true)
+        currentTokenPosition += 1
+        generatedTokenCount += 1
 
-        if generatedTokenAccount == tokens.count + 1 {
+        if generatedTokenCount == 1 {
             print("SwiftLlama Gemma4: decoding first response token")
         }
         if llama_decode(context, batch) != 0 {
             throw SwiftLlamaError.decodeError
         }
-        if generatedTokenAccount == tokens.count + 1 {
+        if generatedTokenCount == 1 {
             print("SwiftLlama Gemma4: decoded first response token")
         }
         return piece
@@ -168,7 +183,8 @@ class LlamaModel {
 
     func clear() {
         ended = false
-        generatedTokenAccount = 0
+        currentTokenPosition = 0
+        generatedTokenCount = 0
         tokens.removeAll()
         llama_memory_clear(llama_get_memory(context), true)
     }
