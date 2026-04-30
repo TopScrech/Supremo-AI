@@ -488,13 +488,16 @@ final class ChatAppModel {
             maxCount: chatSnapshot.settings.rag.maxAnswerCount
         ) : []
         
+        var assistantMessageID: UUID?
+        
         do {
             if !ragContext.isEmpty {
                 let contextText = ragContext.map { "\($0.title): \($0.text)" }.joined(separator: "\n\n")
                 chats[chatIndex].messages.append(ChatMessage(role: .rag, text: contextText))
             }
             
-            let assistantMessage = ChatMessage(role: .assistant, text: "")
+            let assistantMessage = ChatMessage(role: .assistant, text: "", generationStartedAt: Date())
+            assistantMessageID = assistantMessage.id
             chats[chatIndex].messages.append(assistantMessage)
             chats[chatIndex].updatedAt = Date()
             
@@ -504,12 +507,15 @@ final class ChatAppModel {
                 updateMessageTarget(assistantMessage.id, in: chatSnapshot.id, text: partialResponse)
             }
             
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateChatTimestamp(chatSnapshot.id)
             logger.info("Generated streaming response")
         } catch is CancellationError {
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateChatTimestamp(chatSnapshot.id)
             logger.info("Stopped streaming response")
         } catch {
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateLatestAssistantMessage(in: chatSnapshot.id, fallbackText: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
@@ -525,11 +531,23 @@ final class ChatAppModel {
             chats[chatIndex].messages[messageIndex].text = text
             chats[chatIndex].messages[messageIndex].targetText = nil
         }
+        if !text.isEmpty, chats[chatIndex].messages[messageIndex].firstTokenAt == nil {
+            chats[chatIndex].messages[messageIndex].firstTokenAt = Date()
+        }
         chats[chatIndex].updatedAt = Date()
         
         if typingAnimationEnabled {
             startTypingTaskIfNeeded()
         }
+    }
+    
+    private func completeMessageGeneration(_ messageID: UUID?, in chatID: UUID) {
+        guard let messageID else { return }
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }),
+              let messageIndex = chats[chatIndex].messages.firstIndex(where: { $0.id == messageID }) else { return }
+        
+        chats[chatIndex].messages[messageIndex].generationCompletedAt = Date()
+        chats[chatIndex].updatedAt = Date()
     }
     
     private func updateLatestAssistantMessage(in chatID: UUID, fallbackText: String) {

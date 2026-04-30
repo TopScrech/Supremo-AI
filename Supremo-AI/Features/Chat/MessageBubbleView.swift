@@ -43,11 +43,7 @@ struct MessageBubbleView: View {
     @ViewBuilder
     private var tokenCountLabel: some View {
         if showTokenCount {
-            Text("\(ChatMessageTokenCounter.count(in: message.targetText ?? message.text)) tokens")
-                .caption()
-                .secondary()
-                .padding(.horizontal)
-                .monospacedDigit()
+            MessageMetricsView(message: message)
         }
     }
     
