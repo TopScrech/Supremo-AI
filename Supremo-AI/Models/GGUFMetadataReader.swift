@@ -84,6 +84,7 @@ struct GGUFMetadataReader {
 
     private mutating func readUInt64() throws -> Int {
         let value = try readInteger(byteCount: 8)
+        
         guard value <= UInt64(Int.max) else {
             throw CocoaError(.fileReadCorruptFile)
         }

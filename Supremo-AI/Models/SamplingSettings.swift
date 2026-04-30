@@ -1,5 +1,3 @@
-import Foundation
-
 struct SamplingSettings: Codable, Equatable {
     var method = SamplingMethod.temperature
     var temperature = 0.9

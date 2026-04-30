@@ -1,5 +1,3 @@
-import Foundation
-
 struct PredictionSettings: Codable, Equatable {
     var contextLength = 2048
     var batchSize = 512

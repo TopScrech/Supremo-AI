@@ -1,6 +1,6 @@
 import Foundation
 
-enum EmbeddingModel: String, Codable, CaseIterable, Identifiable {
+enum EmbeddingModel: String, Identifiable, Codable, CaseIterable {
     case minilmMultiQA, e5Small, bgeSmall
     
     var id: String { rawValue }

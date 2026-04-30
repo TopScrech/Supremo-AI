@@ -1,5 +1,3 @@
-import Foundation
-
 struct RAGSettings: Codable, Equatable {
     var isEnabled = false
     var embeddingModel = EmbeddingModel.minilmMultiQA
