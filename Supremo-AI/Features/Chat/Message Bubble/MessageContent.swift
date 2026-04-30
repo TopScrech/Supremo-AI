@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct MessageContentView: View {
+struct MessageContent: View {
     let message: ChatMessage
     let style: ChatStyle
     

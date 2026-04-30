@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct MessageMetricsView: View {
+struct MessageMetrics: View {
     private let message: ChatMessage
     
     init(_ message: ChatMessage) {

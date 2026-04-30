@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct MessageBubbleView: View {
+struct MessageBubble: View {
     @AppStorage(AppStorageKey.devMode) private var devMode = false
     
     let message: ChatMessage
