@@ -21,7 +21,7 @@ struct MessageBubble: View {
                             .secondary()
                     }
                     
-                    MessageContentView(message: message, style: style)
+                    MessageContent(message: message, style: style)
                 }
                 .padding()
                 .background(backgroundStyle)
@@ -45,7 +45,7 @@ struct MessageBubble: View {
     @ViewBuilder
     private var tokenCountLabel: some View {
         if showTokenCount, message.role == .user {
-            MessageMetricsView(message)
+            MessageMetrics(message)
         }
     }
     
