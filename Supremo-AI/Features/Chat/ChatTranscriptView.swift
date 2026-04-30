@@ -3,7 +3,11 @@ import SwiftUI
 struct ChatTranscriptView: View {
     @Environment(ChatAppModel.self) private var appModel
     
-    let chat: ChatConfiguration
+    private let chat: ChatConfiguration
+    
+    init(_ chat: ChatConfiguration) {
+        self.chat = chat
+    }
     
     var body: some View {
         if chat.messages.isEmpty {

@@ -19,7 +19,7 @@ struct ChatDetailView: View {
         
         VStack {
             if !chat.messages.isEmpty {
-                ChatTranscriptView(chat: chat)
+                ChatTranscriptView(chat)
             } else if !appModel.isModelReady(for: chat) {
                 MissingModelView(
                     chat: chat,
@@ -45,17 +45,15 @@ struct ChatDetailView: View {
                     showSettings = true
                 }
             } else {
-                ChatTranscriptView(chat: chat)
+                ChatTranscriptView(chat)
             }
             
             let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
             
             if appModel.isTestingAllModels {
-                Button("Stop all testing", systemImage: "stop.fill", role: .destructive) {
-                    appModel.stopTestingAllModels()
-                }
+                Button("Stop all testing", systemImage: "stop.fill", role: .destructive, action: appModel.stopTestingAllModels)
 #if !os(visionOS)
-                .buttonStyle(.glassProminent)
+                    .buttonStyle(.glassProminent)
 #endif
             }
             
