@@ -12,6 +12,8 @@ final class ChatAppModel {
     var modelInitializationStates: [UUID: ModelInitializationState] = [:]
     var modelInitializationMessages: [UUID: String] = [:]
     var isGenerating = false
+    var isTestingAllModels = false
+    var testAllModelsStatus: String?
     var searchText = ""
     
     private let store = JSONFileStore()
@@ -23,6 +25,7 @@ final class ChatAppModel {
     private var huggingFaceMetadataCache: [String: HuggingFaceModelMetadata] = [:]
     private var generationTask: Task<Void, Never>?
     private var typingTask: Task<Void, Never>?
+    @ObservationIgnored private var testAllModelsTask: Task<Void, Never>?
     @ObservationIgnored private var downloadStateEntries: [String: DownloadStateEntry] = [:]
     
     var isInferenceBackendAvailable: Bool {
@@ -268,6 +271,80 @@ final class ChatAppModel {
         modelInitializationStates[chat.id] = .idle
         modelInitializationMessages[chat.id] = nil
         logger.info("Ejected model \(chat.modelName, privacy: .public)")
+    }
+    
+    func testAllModels() {
+        guard testAllModelsTask == nil else { return }
+        
+        testAllModelsTask = Task { [weak self] in
+            await self?.runTestAllModels()
+        }
+    }
+    
+    func stopTestingAllModels() {
+        guard isTestingAllModels else { return }
+        
+        testAllModelsStatus = "Stopping"
+        testAllModelsTask?.cancel()
+        stopGenerating()
+    }
+    
+    private func runTestAllModels() async {
+        guard !isTestingAllModels else { return }
+        
+        let models = modelFiles.filter { $0.isAvailableLocally && !$0.isMultimodalProjector }
+        guard let firstModel = models.first else {
+            testAllModelsStatus = "No local models available"
+            testAllModelsTask = nil
+            return
+        }
+        
+        isTestingAllModels = true
+        testAllModelsStatus = "Preparing \(firstModel.displayName)"
+        
+        let chat = ChatConfiguration(title: "All Model Test", modelName: firstModel.displayName, modelFileID: firstModel.id)
+        chats.insert(chat, at: 0)
+        selectedChatID = chat.id
+        persistStatus()
+        
+        defer {
+            isTestingAllModels = false
+            testAllModelsStatus = nil
+            testAllModelsTask = nil
+            persistStatus()
+        }
+        
+        for model in models {
+            guard !Task.isCancelled else { return }
+            guard let currentChat = chats.first(where: { $0.id == chat.id }) else { return }
+            
+            testAllModelsStatus = "Testing \(model.displayName)"
+            await assignModel(model, to: currentChat)
+            
+            guard let assignedChat = chats.first(where: { $0.id == chat.id }) else { return }
+            await initializeModel(for: assignedChat)
+            
+            if Task.isCancelled {
+                await ejectModel(for: assignedChat)
+                return
+            }
+            
+            guard isModelInitialized(for: assignedChat) else {
+                logger.error("Skipping \(model.displayName, privacy: .public) because model initialization failed")
+                await ejectModel(for: assignedChat)
+                continue
+            }
+            
+            selectedChatID = chat.id
+            await sendPrompt("How to become a good developer", useRAG: false)
+            
+            guard let generatedChat = chats.first(where: { $0.id == chat.id }) else { return }
+            await ejectModel(for: generatedChat)
+            
+            guard !Task.isCancelled else { return }
+        }
+        
+        testAllModelsStatus = "Finished testing all models"
     }
     
     func assignModel(_ model: ModelFile, to chat: ChatConfiguration) async {

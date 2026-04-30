@@ -70,6 +70,15 @@ struct ChatDetailView: View {
             
             let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
             
+            if appModel.isTestingAllModels {
+                Button("Stop all testing", systemImage: "stop.fill", role: .destructive) {
+                    appModel.stopTestingAllModels()
+                }
+#if !os(visionOS)
+                .buttonStyle(.glassProminent)
+#endif
+            }
+            
             ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
                 .animation(.default, value: appModel.isGenerating)
                 .disabled(!appModel.canRunChat(chat))
