@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ChatTranscriptView: View {
+    @Environment(ChatAppModel.self) private var appModel
+    
     let chat: ChatConfiguration
     
     var body: some View {
@@ -11,7 +13,7 @@ struct ChatTranscriptView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading) {
                         ForEach(chat.messages) {
-                            MessageBubbleView(message: $0, style: chat.settings.style)
+                            MessageBubbleView(message: $0, style: chat.settings.style, showTokenCount: !appModel.isGenerating)
                                 .id($0.id)
                         }
                     }
