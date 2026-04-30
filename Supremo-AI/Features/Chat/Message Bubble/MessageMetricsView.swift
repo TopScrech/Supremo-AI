@@ -7,30 +7,8 @@ struct MessageMetricsView: View {
         ChatMessageTokenCounter.count(in: message.targetText ?? message.text)
     }
     
-    private var tokensPerSecond: String? {
-        message.tokensPerSecond?.formatted(.number.precision(.fractionLength(1)))
-    }
-    
-    private var ttft: String? {
-        message.timeToFirstToken?.formatted(.number.precision(.fractionLength(2)))
-    }
-    
     var body: some View {
-        HStack(spacing: 0) {
-            Text("\(totalTokens) tokens")
-            
-            Text(" • ")
-            
-            if let tokensPerSecond {
-                Text("\(tokensPerSecond) tok/s")
-            }
-            
-            Text(" • ")
-            
-            if let ttft {
-                Text("\(ttft)s TTFT")
-            }
-        }
+        Text("\(totalTokens) tokens")
         .caption()
         .secondary()
         .padding(.horizontal)

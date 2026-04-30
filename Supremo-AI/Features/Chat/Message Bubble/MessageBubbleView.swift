@@ -15,9 +15,11 @@ struct MessageBubbleView: View {
             
             VStack(alignment: bubbleAlignment) {
                 VStack(alignment: .leading) {
-                    Text(message.role.label)
-                        .caption()
-                        .secondary()
+                    if message.role != .user {
+                        Text(message.role.label)
+                            .caption()
+                            .secondary()
+                    }
                     
                     MessageContentView(message: message, style: style)
                 }
@@ -42,7 +44,7 @@ struct MessageBubbleView: View {
     
     @ViewBuilder
     private var tokenCountLabel: some View {
-        if showTokenCount {
+        if showTokenCount, message.role == .user {
             MessageMetricsView(message: message)
         }
     }
