@@ -34,7 +34,7 @@ struct DownloadState: Codable, Equatable {
     
     private var speedDescription: String? {
         guard let bytesPerSecond, bytesPerSecond > 0 else { return nil }
-        return "\(Self.byteCountDescription(for: bytesPerSecond, fractionLength: 1))/s"
+        return "\(Self.bitCountDescription(for: bytesPerSecond * 8))/s"
     }
     
     private static func byteCountDescription(for bytes: Double, fractionLength: Int = 2) -> String {
@@ -48,6 +48,20 @@ struct DownloadState: Codable, Equatable {
         }
         
         let formattedValue = value.formatted(.number.precision(.fractionLength(fractionLength)))
+        return "\(formattedValue) \(units[unitIndex])"
+    }
+    
+    private static func bitCountDescription(for bits: Double) -> String {
+        let units = ["b", "kb", "Mb", "Gb", "Tb"]
+        var value = bits
+        var unitIndex = 0
+        
+        while value >= 1_000, unitIndex < units.count - 1 {
+            value /= 1_000
+            unitIndex += 1
+        }
+        
+        let formattedValue = value.formatted(.number.precision(.fractionLength(1)))
         return "\(formattedValue) \(units[unitIndex])"
     }
 }
