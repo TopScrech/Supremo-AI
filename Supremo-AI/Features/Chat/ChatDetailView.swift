@@ -70,9 +70,15 @@ struct ChatDetailView: View {
                 )
             }
             
-            ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
-                .animation(.default, value: appModel.isGenerating)
-                .disabled(!appModel.canRunChat(chat))
+            ChatComposer(
+                prompt: $prompt,
+                isResponding: $appModel.isGenerating,
+                isFocused: $isComposerFocused,
+                sendPrompt: sendPrompt,
+                stopAction: stopAction
+            )
+            .animation(.default, value: appModel.isGenerating)
+            .disabled(!appModel.canRunChat(chat))
         }
         .navigationTitle(chat.title)
         .navigationBarTitleDisplayMode(.inline)
