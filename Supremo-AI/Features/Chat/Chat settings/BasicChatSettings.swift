@@ -18,7 +18,7 @@ struct BasicChatSettings: View {
                         .secondary()
                 }
                 
-                LabeledContent("Model", value: chat.modelName)
+                ChatModelPicker($chat)
             }
             
             Section {

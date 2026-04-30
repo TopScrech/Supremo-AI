@@ -22,7 +22,7 @@ struct GeneralSettings: View {
                             appModel.stopTestingAllModels()
                         }
                     } else {
-                        Button("Test all downloaded models", systemImage: "checklist") {
+                        Button("Test all downloaded models") {
                             dismiss()
                             appModel.testAllModels()
                         }
