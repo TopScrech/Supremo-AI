@@ -18,7 +18,7 @@ struct BasicChatSettings: View {
                         .secondary()
                 }
                 
-                LabeledContent("Model", value: chat.modelName)
+                ChatModelPicker($chat)
             }
             
             Section {
@@ -39,6 +39,7 @@ struct BasicChatSettings: View {
                 }
                 
                 Toggle("RAG", isOn: $chat.settings.rag.isEnabled)
+                Toggle("Chat history in context", isOn: $chat.settings.includesChatHistory)
                 Toggle("Metal", isOn: $chat.settings.prediction.useMetal)
                 Toggle("CLIP Metal", isOn: $chat.settings.prediction.useClipMetal)
             }

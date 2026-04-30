@@ -1,5 +1,4 @@
 import Foundation
-import Observation
 import OSLog
 
 @Observable
@@ -13,7 +12,10 @@ final class ChatAppModel {
     var modelInitializationStates: [UUID: ModelInitializationState] = [:]
     var modelInitializationMessages: [UUID: String] = [:]
     var isGenerating = false
+    var isTestingAllModels = false
+    var testAllModelsStatus: String?
     var searchText = ""
+    var typingAnimationEnabled = UserDefaults.standard.object(forKey: AppStorageKey.typingAnimationEnabled) as? Bool ?? true
     
     private let store = JSONFileStore()
     private let ragIndexer = RAGIndexer()
@@ -24,6 +26,7 @@ final class ChatAppModel {
     private var huggingFaceMetadataCache: [String: HuggingFaceModelMetadata] = [:]
     private var generationTask: Task<Void, Never>?
     private var typingTask: Task<Void, Never>?
+    @ObservationIgnored private var testAllModelsTask: Task<Void, Never>?
     @ObservationIgnored private var downloadStateEntries: [String: DownloadStateEntry] = [:]
     
     var isInferenceBackendAvailable: Bool {
@@ -148,6 +151,7 @@ final class ChatAppModel {
     
     func load() {
         do {
+            typingAnimationEnabled = UserDefaults.standard.object(forKey: AppStorageKey.typingAnimationEnabled) as? Bool ?? true
             try store.ensureDirectories()
             chats = (try? store.load([ChatConfiguration].self, from: "chats.json")) ?? [ChatConfiguration.sample]
             finishPersistedTypingAnimations()
@@ -271,6 +275,80 @@ final class ChatAppModel {
         logger.info("Ejected model \(chat.modelName, privacy: .public)")
     }
     
+    func testAllModels() {
+        guard testAllModelsTask == nil else { return }
+        
+        testAllModelsTask = Task { [weak self] in
+            await self?.runTestAllModels()
+        }
+    }
+    
+    func stopTestingAllModels() {
+        guard isTestingAllModels else { return }
+        
+        testAllModelsStatus = "Stopping"
+        testAllModelsTask?.cancel()
+        stopGenerating()
+    }
+    
+    private func runTestAllModels() async {
+        guard !isTestingAllModels else { return }
+        
+        let models = modelFiles.filter { $0.isAvailableLocally && !$0.isMultimodalProjector }
+        guard let firstModel = models.first else {
+            testAllModelsStatus = "No local models available"
+            testAllModelsTask = nil
+            return
+        }
+        
+        isTestingAllModels = true
+        testAllModelsStatus = "Preparing \(firstModel.displayName)"
+        
+        let chat = ChatConfiguration(title: "All Model Test", modelName: firstModel.displayName, modelFileID: firstModel.id)
+        chats.insert(chat, at: 0)
+        selectedChatID = chat.id
+        persistStatus()
+        
+        defer {
+            isTestingAllModels = false
+            testAllModelsStatus = nil
+            testAllModelsTask = nil
+            persistStatus()
+        }
+        
+        for model in models {
+            guard !Task.isCancelled else { return }
+            guard let currentChat = chats.first(where: { $0.id == chat.id }) else { return }
+            
+            testAllModelsStatus = "Testing \(model.displayName)"
+            await assignModel(model, to: currentChat)
+            
+            guard let assignedChat = chats.first(where: { $0.id == chat.id }) else { return }
+            await initializeModel(for: assignedChat)
+            
+            if Task.isCancelled {
+                await ejectModel(for: assignedChat)
+                return
+            }
+            
+            guard isModelInitialized(for: assignedChat) else {
+                logger.error("Skipping \(model.displayName, privacy: .public) because model initialization failed")
+                await ejectModel(for: assignedChat)
+                continue
+            }
+            
+            selectedChatID = chat.id
+            await sendPrompt("How to become a good developer", useRAG: false)
+            
+            guard let generatedChat = chats.first(where: { $0.id == chat.id }) else { return }
+            await ejectModel(for: generatedChat)
+            
+            guard !Task.isCancelled else { return }
+        }
+        
+        testAllModelsStatus = "Finished testing all models"
+    }
+    
     func assignModel(_ model: ModelFile, to chat: ChatConfiguration) async {
         guard model.isAvailableLocally else {
             logger.info("Finish downloading \(model.fileName, privacy: .public) before using it")
@@ -364,6 +442,20 @@ final class ChatAppModel {
         persistStatus()
     }
     
+    func setTypingAnimationEnabled(_ isEnabled: Bool) {
+        typingAnimationEnabled = isEnabled
+        UserDefaults.standard.set(isEnabled, forKey: AppStorageKey.typingAnimationEnabled)
+        
+        if isEnabled {
+            startTypingTaskIfNeeded()
+        } else {
+            typingTask?.cancel()
+            typingTask = nil
+            finishPersistedTypingAnimations()
+            persistStatus()
+        }
+    }
+    
     private func runPrompt(_ prompt: String, useRAG: Bool) async {
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPrompt.isEmpty, let chatIndex = currentChatIndex else { return }
@@ -396,13 +488,16 @@ final class ChatAppModel {
             maxCount: chatSnapshot.settings.rag.maxAnswerCount
         ) : []
         
+        var assistantMessageID: UUID?
+        
         do {
             if !ragContext.isEmpty {
                 let contextText = ragContext.map { "\($0.title): \($0.text)" }.joined(separator: "\n\n")
                 chats[chatIndex].messages.append(ChatMessage(role: .rag, text: contextText))
             }
             
-            let assistantMessage = ChatMessage(role: .assistant, text: "")
+            let assistantMessage = ChatMessage(role: .assistant, text: "", generationStartedAt: Date())
+            assistantMessageID = assistantMessage.id
             chats[chatIndex].messages.append(assistantMessage)
             chats[chatIndex].updatedAt = Date()
             
@@ -412,12 +507,15 @@ final class ChatAppModel {
                 updateMessageTarget(assistantMessage.id, in: chatSnapshot.id, text: partialResponse)
             }
             
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateChatTimestamp(chatSnapshot.id)
             logger.info("Generated streaming response")
         } catch is CancellationError {
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateChatTimestamp(chatSnapshot.id)
             logger.info("Stopped streaming response")
         } catch {
+            completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateLatestAssistantMessage(in: chatSnapshot.id, fallbackText: error.localizedDescription)
             logger.error("\(error.localizedDescription, privacy: .public)")
         }
@@ -427,9 +525,29 @@ final class ChatAppModel {
         guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }),
               let messageIndex = chats[chatIndex].messages.firstIndex(where: { $0.id == messageID }) else { return }
         
-        chats[chatIndex].messages[messageIndex].targetText = text
+        if typingAnimationEnabled {
+            chats[chatIndex].messages[messageIndex].targetText = text
+        } else {
+            chats[chatIndex].messages[messageIndex].text = text
+            chats[chatIndex].messages[messageIndex].targetText = nil
+        }
+        if !text.isEmpty, chats[chatIndex].messages[messageIndex].firstTokenAt == nil {
+            chats[chatIndex].messages[messageIndex].firstTokenAt = Date()
+        }
         chats[chatIndex].updatedAt = Date()
-        startTypingTaskIfNeeded()
+        
+        if typingAnimationEnabled {
+            startTypingTaskIfNeeded()
+        }
+    }
+    
+    private func completeMessageGeneration(_ messageID: UUID?, in chatID: UUID) {
+        guard let messageID else { return }
+        guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }),
+              let messageIndex = chats[chatIndex].messages.firstIndex(where: { $0.id == messageID }) else { return }
+        
+        chats[chatIndex].messages[messageIndex].generationCompletedAt = Date()
+        chats[chatIndex].updatedAt = Date()
     }
     
     private func updateLatestAssistantMessage(in chatID: UUID, fallbackText: String) {
@@ -437,8 +555,16 @@ final class ChatAppModel {
         
         if let messageIndex = chats[chatIndex].messages.lastIndex(where: { $0.role == .assistant }) {
             let existingText = chats[chatIndex].messages[messageIndex].text
-            chats[chatIndex].messages[messageIndex].targetText = existingText.isEmpty ? fallbackText : existingText
-            startTypingTaskIfNeeded()
+            if typingAnimationEnabled {
+                chats[chatIndex].messages[messageIndex].targetText = existingText.isEmpty ? fallbackText : existingText
+            } else if existingText.isEmpty {
+                chats[chatIndex].messages[messageIndex].text = fallbackText
+                chats[chatIndex].messages[messageIndex].targetText = nil
+            }
+            
+            if typingAnimationEnabled {
+                startTypingTaskIfNeeded()
+            }
         } else {
             chats[chatIndex].messages.append(ChatMessage(role: .assistant, text: fallbackText))
         }
@@ -451,6 +577,12 @@ final class ChatAppModel {
     }
     
     private func startTypingTaskIfNeeded() {
+        guard typingAnimationEnabled else {
+            finishPersistedTypingAnimations()
+            persistStatus()
+            return
+        }
+        
         guard typingTask == nil else { return }
         
         typingTask = Task { [weak self] in
@@ -689,13 +821,18 @@ final class ChatAppModel {
             request.setValue("bytes=\(existingBytes)-", forHTTPHeaderField: "Range")
         }
         
-        let delegate = ModelDataDownloadDelegate(destination: destination, existingBytes: existingBytes) { [weak self] downloadedBytes, totalBytes in
+        let delegate = ModelDataDownloadDelegate(destination: destination, existingBytes: existingBytes) { [weak self] downloadedBytes, totalBytes, bytesPerSecond in
             Task { @MainActor [weak self] in
                 if let totalBytes {
                     progress?.totalUnitCount = Int64(totalBytes)
                 }
                 progress?.completedUnitCount = Int64(downloadedBytes)
-                self?.updateDownloadProgress(modelFileName: modelFileName, downloadedBytes: downloadedBytes, totalBytes: totalBytes)
+                self?.updateDownloadProgress(
+                    modelFileName: modelFileName,
+                    downloadedBytes: downloadedBytes,
+                    totalBytes: totalBytes,
+                    bytesPerSecond: bytesPerSecond
+                )
             }
         }
         let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
@@ -710,10 +847,11 @@ final class ChatAppModel {
         }
     }
     
-    private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?) {
+    private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?, bytesPerSecond: Double?) {
         updateDownloadState(for: modelFileName) {
             $0.downloadedBytes = downloadedBytes
             $0.totalBytes = totalBytes
+            $0.bytesPerSecond = bytesPerSecond
         }
     }
     
@@ -1087,6 +1225,7 @@ private struct HuggingFaceModelCardData: Decodable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         baseModel = try container.decodeIfPresent(String.self, forKey: .baseModel)
         modelName = try container.decodeIfPresent(String.self, forKey: .modelName)
@@ -1098,18 +1237,22 @@ private struct HuggingFaceModelCardData: Decodable {
 private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate {
     private static let progressUpdateInterval = 1.0
     private static let progressUpdateByteInterval = 16 * 1024 * 1024
+    private static let speedUpdateInterval = 1.0
     
     private let destination: URL
     private let existingBytes: Int
-    private let progressHandler: @Sendable (Int, Int?) -> Void
+    private let progressHandler: @Sendable (Int, Int?, Double?) -> Void
     private var continuation: CheckedContinuation<Void, Error>?
     private var fileHandle: FileHandle?
     private var downloadedBytes = 0
     private var totalBytes: Int?
     private var lastProgressUpdate = Date.distantPast
     private var lastProgressBytes = 0
+    private var lastSpeedUpdate = Date.distantPast
+    private var lastSpeedBytes = 0
+    private var currentBytesPerSecond: Double?
     
-    init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?) -> Void) {
+    init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?, Double?) -> Void) {
         self.destination = destination
         self.existingBytes = existingBytes
         self.progressHandler = progressHandler
@@ -1145,6 +1288,9 @@ private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate 
             
             fileHandle = handle
             downloadedBytes = effectiveExistingBytes
+            lastSpeedUpdate = Date()
+            lastSpeedBytes = downloadedBytes
+            currentBytesPerSecond = nil
             
             if response.expectedContentLength > 0 {
                 totalBytes = effectiveExistingBytes + Int(response.expectedContentLength)
@@ -1201,9 +1347,29 @@ private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate 
         
         guard force || hasEnoughBytes || hasEnoughTime else { return }
         
+        let bytesPerSecond = downloadSpeed(at: now)
         lastProgressUpdate = now
         lastProgressBytes = downloadedBytes
-        progressHandler(downloadedBytes, totalBytes)
+        progressHandler(downloadedBytes, totalBytes, bytesPerSecond)
+    }
+    
+    private func downloadSpeed(at date: Date) -> Double? {
+        let elapsedTime = date.timeIntervalSince(lastSpeedUpdate)
+        guard elapsedTime >= Self.speedUpdateInterval else { return currentBytesPerSecond }
+        
+        let downloadedByteCount = downloadedBytes - lastSpeedBytes
+        guard downloadedByteCount > 0 else {
+            lastSpeedUpdate = date
+            lastSpeedBytes = downloadedBytes
+            currentBytesPerSecond = nil
+            return nil
+        }
+        
+        let bytesPerSecond = Double(downloadedByteCount) / elapsedTime
+        lastSpeedUpdate = date
+        lastSpeedBytes = downloadedBytes
+        currentBytesPerSecond = bytesPerSecond
+        return bytesPerSecond
     }
 }
 

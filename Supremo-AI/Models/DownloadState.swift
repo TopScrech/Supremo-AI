@@ -3,6 +3,7 @@ import Foundation
 struct DownloadState: Codable, Equatable {
     var downloadedBytes = 0
     var totalBytes: Int?
+    var bytesPerSecond: Double?
     var isDownloading = false
     var errorMessage: String?
     
@@ -16,15 +17,27 @@ struct DownloadState: Codable, Equatable {
             return errorMessage
         }
         
+        let sizeText: String
         if let totalBytes {
-            return "\(downloadedSizeDescription) of \(totalBytes.formatted(.byteCount(style: .file)))"
+            sizeText = "\(downloadedSizeDescription) of \(totalBytes.formatted(.byteCount(style: .file)))"
+        } else {
+            sizeText = downloadedBytes == 0 ? "Preparing" : downloadedSizeDescription
         }
         
-        return downloadedBytes == 0 ? "Preparing" : downloadedSizeDescription
+        guard isDownloading, let speedDescription else { return sizeText }
+        return "\(sizeText) at \(speedDescription)"
     }
     
     private var downloadedSizeDescription: String {
-        let bytes = Double(downloadedBytes)
+        Self.byteCountDescription(for: Double(downloadedBytes))
+    }
+    
+    private var speedDescription: String? {
+        guard let bytesPerSecond, bytesPerSecond > 0 else { return nil }
+        return "\(Self.bitCountDescription(for: bytesPerSecond * 8))/s"
+    }
+    
+    private static func byteCountDescription(for bytes: Double, fractionLength: Int = 2) -> String {
         let units = ["bytes", "KB", "MB", "GB", "TB"]
         var value = bytes
         var unitIndex = 0
@@ -34,7 +47,21 @@ struct DownloadState: Codable, Equatable {
             unitIndex += 1
         }
         
-        let formattedValue = value.formatted(.number.precision(.fractionLength(2)))
+        let formattedValue = value.formatted(.number.precision(.fractionLength(fractionLength)))
+        return "\(formattedValue) \(units[unitIndex])"
+    }
+    
+    private static func bitCountDescription(for bits: Double) -> String {
+        let units = ["b", "kb", "Mb", "Gb", "Tb"]
+        var value = bits
+        var unitIndex = 0
+        
+        while value >= 1_000, unitIndex < units.count - 1 {
+            value /= 1_000
+            unitIndex += 1
+        }
+        
+        let formattedValue = value.formatted(.number.precision(.fractionLength(1)))
         return "\(formattedValue) \(units[unitIndex])"
     }
 }

@@ -18,7 +18,9 @@ struct ChatDetailView: View {
         @Bindable var appModel = appModel
         
         VStack {
-            if !appModel.isModelReady(for: chat) {
+            if !chat.messages.isEmpty {
+                ChatTranscriptView(chat: chat)
+            } else if !appModel.isModelReady(for: chat) {
                 MissingModelView(
                     chat: chat,
                     installAction: {
@@ -42,33 +44,33 @@ struct ChatDetailView: View {
                 ) {
                     showSettings = true
                 }
-            } else if chat.messages.isEmpty {
-                ContentUnavailableView("Start a Conversation", systemImage: "text.bubble", description: Text(chat.modelName))
             } else {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading) {
-                            ForEach(chat.messages) {
-                                MessageBubbleView(message: $0, style: chat.settings.style)
-                                    .id($0.id)
-                            }
-                        }
-                        .padding()
-                    }
-                    .onChange(of: chat.messages.count) {
-                        if let lastMessage = chat.messages.last {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                        }
-                    }
-                    .onChange(of: chat.messages.last?.text) {
-                        if let lastMessage = chat.messages.last {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                        }
-                    }
-                }
+                ChatTranscriptView(chat: chat)
             }
             
             let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil
+            
+            if appModel.isTestingAllModels {
+                Button("Stop all testing", systemImage: "stop.fill", role: .destructive) {
+                    appModel.stopTestingAllModels()
+                }
+#if !os(visionOS)
+                .buttonStyle(.glassProminent)
+#endif
+            }
+            
+            if !chat.messages.isEmpty && !appModel.canRunChat(chat) {
+                ChatUnavailableActionsView(
+                    isModelReady: appModel.isModelReady(for: chat),
+                    isInferenceBackendAvailable: appModel.isInferenceBackendAvailable,
+                    initializationState: appModel.modelInitializationState(for: chat),
+                    selectModelAction: selectModel,
+                    installModelAction: {
+                        showModelInstall = true
+                    },
+                    initializeAction: initializeModel
+                )
+            }
             
             ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
                 .animation(.default, value: appModel.isGenerating)
@@ -130,6 +132,11 @@ struct ChatDetailView: View {
                 isComposerFocused = true
             }
         }
+    }
+    
+    private func selectModel() {
+        selectedSettingsScreen = .models
+        showAppSettings = true
     }
     
     private func ejectModel() {
