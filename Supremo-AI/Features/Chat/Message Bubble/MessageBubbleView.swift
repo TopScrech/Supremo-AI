@@ -45,7 +45,7 @@ struct MessageBubbleView: View {
     @ViewBuilder
     private var tokenCountLabel: some View {
         if showTokenCount, message.role == .user {
-            MessageMetricsView(message: message)
+            MessageMetricsView(message)
         }
     }
     
