@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct ChatRowView: View {
+struct ChatCard: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let chat: ChatConfiguration
