@@ -5,7 +5,7 @@ struct GeneralSettings: View {
     @Environment(\.dismiss) private var dismiss
     
     @AppStorage(AppStorageKey.disableStatusBar) private var disableStatusBar = false
-    @AppStorage(AppStorageKey.debugMode) private var debugMode = false
+    @AppStorage(AppStorageKey.devMode) private var devMode = false
     @AppStorage(AppStorageKey.typingAnimationEnabled) private var typingAnimationEnabled = true
     
     var body: some View {
@@ -22,7 +22,7 @@ struct GeneralSettings: View {
             }
             
             Section("Debug") {
-                Toggle("Debug Mode", isOn: $debugMode)
+                Toggle("Dev mode", isOn: $devMode)
                 
                 Group {
                     if appModel.isTestingAllModels {

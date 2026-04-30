@@ -1,7 +1,7 @@
 import ScrechKit
 
 struct MessageBubbleView: View {
-    @AppStorage(AppStorageKey.debugMode) private var debugMode = false
+    @AppStorage(AppStorageKey.devMode) private var devMode = false
     
     let message: ChatMessage
     let style: ChatStyle
@@ -25,7 +25,7 @@ struct MessageBubbleView: View {
                 .background(backgroundStyle)
                 .clipShape(.rect(cornerRadius: 8))
                 
-                if debugMode {
+                if devMode {
                     tokenCountLabel
                 }
             }
