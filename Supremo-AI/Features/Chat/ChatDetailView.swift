@@ -75,6 +75,7 @@ struct ChatDetailView: View {
                 .disabled(!appModel.canRunChat(chat))
         }
         .navigationTitle(chat.title)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem {
                 if !chat.messages.isEmpty {
