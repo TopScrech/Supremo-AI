@@ -55,14 +55,19 @@ struct GGUFMetadataReader {
         switch type {
         case .uint8, .int8, .bool:
             try skipBytes(count: 1)
+            
         case .uint16, .int16:
             try skipBytes(count: 2)
+            
         case .uint32, .int32, .float32:
             try skipBytes(count: 4)
+            
         case .uint64, .int64, .float64:
             try skipBytes(count: 8)
+            
         case .string:
             _ = try readString()
+            
         case .array:
             let elementType = try readValueType()
             let elementCount = try readUInt64()
@@ -104,6 +109,7 @@ struct GGUFMetadataReader {
 
         let range = offset..<(offset + count)
         offset += count
+        
         return data.subdata(in: range)
     }
 
