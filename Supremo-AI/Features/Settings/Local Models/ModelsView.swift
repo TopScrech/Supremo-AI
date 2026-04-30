@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 struct ModelsView: View {
     @Environment(ChatAppModel.self) private var appModel
-    @AppStorage("modelsSortOrder") private var sortOrder = ModelSortOrder.family
+    @AppStorage(AppStorageKey.modelsSortOrder) private var sortOrder = ModelSortOrder.family
     
     @State private var showImporter = false
     @State private var isDeleteAllPresented = false

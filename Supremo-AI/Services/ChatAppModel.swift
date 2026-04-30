@@ -15,6 +15,7 @@ final class ChatAppModel {
     var isTestingAllModels = false
     var testAllModelsStatus: String?
     var searchText = ""
+    var typingAnimationEnabled = UserDefaults.standard.object(forKey: AppStorageKey.typingAnimationEnabled) as? Bool ?? true
     
     private let store = JSONFileStore()
     private let ragIndexer = RAGIndexer()
@@ -150,6 +151,7 @@ final class ChatAppModel {
     
     func load() {
         do {
+            typingAnimationEnabled = UserDefaults.standard.object(forKey: AppStorageKey.typingAnimationEnabled) as? Bool ?? true
             try store.ensureDirectories()
             chats = (try? store.load([ChatConfiguration].self, from: "chats.json")) ?? [ChatConfiguration.sample]
             finishPersistedTypingAnimations()
@@ -440,6 +442,20 @@ final class ChatAppModel {
         persistStatus()
     }
     
+    func setTypingAnimationEnabled(_ isEnabled: Bool) {
+        typingAnimationEnabled = isEnabled
+        UserDefaults.standard.set(isEnabled, forKey: AppStorageKey.typingAnimationEnabled)
+        
+        if isEnabled {
+            startTypingTaskIfNeeded()
+        } else {
+            typingTask?.cancel()
+            typingTask = nil
+            finishPersistedTypingAnimations()
+            persistStatus()
+        }
+    }
+    
     private func runPrompt(_ prompt: String, useRAG: Bool) async {
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPrompt.isEmpty, let chatIndex = currentChatIndex else { return }
@@ -503,9 +519,17 @@ final class ChatAppModel {
         guard let chatIndex = chats.firstIndex(where: { $0.id == chatID }),
               let messageIndex = chats[chatIndex].messages.firstIndex(where: { $0.id == messageID }) else { return }
         
-        chats[chatIndex].messages[messageIndex].targetText = text
+        if typingAnimationEnabled {
+            chats[chatIndex].messages[messageIndex].targetText = text
+        } else {
+            chats[chatIndex].messages[messageIndex].text = text
+            chats[chatIndex].messages[messageIndex].targetText = nil
+        }
         chats[chatIndex].updatedAt = Date()
-        startTypingTaskIfNeeded()
+        
+        if typingAnimationEnabled {
+            startTypingTaskIfNeeded()
+        }
     }
     
     private func updateLatestAssistantMessage(in chatID: UUID, fallbackText: String) {
@@ -513,8 +537,16 @@ final class ChatAppModel {
         
         if let messageIndex = chats[chatIndex].messages.lastIndex(where: { $0.role == .assistant }) {
             let existingText = chats[chatIndex].messages[messageIndex].text
-            chats[chatIndex].messages[messageIndex].targetText = existingText.isEmpty ? fallbackText : existingText
-            startTypingTaskIfNeeded()
+            if typingAnimationEnabled {
+                chats[chatIndex].messages[messageIndex].targetText = existingText.isEmpty ? fallbackText : existingText
+            } else if existingText.isEmpty {
+                chats[chatIndex].messages[messageIndex].text = fallbackText
+                chats[chatIndex].messages[messageIndex].targetText = nil
+            }
+            
+            if typingAnimationEnabled {
+                startTypingTaskIfNeeded()
+            }
         } else {
             chats[chatIndex].messages.append(ChatMessage(role: .assistant, text: fallbackText))
         }
@@ -527,6 +559,12 @@ final class ChatAppModel {
     }
     
     private func startTypingTaskIfNeeded() {
+        guard typingAnimationEnabled else {
+            finishPersistedTypingAnimations()
+            persistStatus()
+            return
+        }
+        
         guard typingTask == nil else { return }
         
         typingTask = Task { [weak self] in

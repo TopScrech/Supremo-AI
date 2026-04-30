@@ -2,7 +2,7 @@ import ScrechKit
 
 struct AppContainer: View {
     @Environment(ChatAppModel.self) private var appModel
-    @AppStorage("disableStatusBar") private var disableStatusBar = false
+    @AppStorage(AppStorageKey.disableStatusBar) private var disableStatusBar = false
     
     @State private var selectedSettingsScreen = SettingsScreen.models
     @State private var showSettings = false
