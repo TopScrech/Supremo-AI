@@ -2,6 +2,8 @@ import Foundation
 
 struct ModelCatalog {
     static let featured: [DownloadableModel] = [
+        model("Llama 3.2 Instruct 3B Uncensored", url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-uncensored-GGUF", versionPrefix: "Llama-3.2-3B-Instruct-Uncensored", inference: .llama),
+        model("Llama 3.2 Instruct 3B", url: "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF", versionPrefix: "Llama-3.2-3B-Instruct", inference: .llama),
         model("Llama 3.2 Instruct 1B", url: "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF", versionPrefix: "Llama-3.2-1B-Instruct", inference: .llama),
         model("Gemma 4 E2B Instruct", url: "https://lmstudio.ai/models/google/gemma-4-e2b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-4-E2B-it-GGUF", versionPrefix: "gemma-4-E2B-it", inference: .gemma),
         model("Gemma 4 E4B Instruct", url: "https://lmstudio.ai/models/google/gemma-4-e4b", sourceURL: "https://huggingface.co/lmstudio-community/gemma-4-E4B-it-GGUF", versionPrefix: "gemma-4-E4B-it", inference: .gemma),
