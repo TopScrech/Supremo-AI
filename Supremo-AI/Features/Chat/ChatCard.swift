@@ -25,6 +25,7 @@ struct ChatCard: View {
                 .caption()
                 .foregroundStyle(.tertiary)
         }
+        .foregroundStyle(.foreground)
         .alert("Rename Chat", isPresented: $isRenamePresented) {
             TextField("Name", text: $renameTitle)
             Button("Cancel", role: .cancel, action: resetRename)
