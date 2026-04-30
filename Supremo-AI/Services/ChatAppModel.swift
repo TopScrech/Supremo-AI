@@ -821,13 +821,18 @@ final class ChatAppModel {
             request.setValue("bytes=\(existingBytes)-", forHTTPHeaderField: "Range")
         }
         
-        let delegate = ModelDataDownloadDelegate(destination: destination, existingBytes: existingBytes) { [weak self] downloadedBytes, totalBytes in
+        let delegate = ModelDataDownloadDelegate(destination: destination, existingBytes: existingBytes) { [weak self] downloadedBytes, totalBytes, bytesPerSecond in
             Task { @MainActor [weak self] in
                 if let totalBytes {
                     progress?.totalUnitCount = Int64(totalBytes)
                 }
                 progress?.completedUnitCount = Int64(downloadedBytes)
-                self?.updateDownloadProgress(modelFileName: modelFileName, downloadedBytes: downloadedBytes, totalBytes: totalBytes)
+                self?.updateDownloadProgress(
+                    modelFileName: modelFileName,
+                    downloadedBytes: downloadedBytes,
+                    totalBytes: totalBytes,
+                    bytesPerSecond: bytesPerSecond
+                )
             }
         }
         let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
@@ -842,10 +847,11 @@ final class ChatAppModel {
         }
     }
     
-    private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?) {
+    private func updateDownloadProgress(modelFileName: String, downloadedBytes: Int, totalBytes: Int?, bytesPerSecond: Double?) {
         updateDownloadState(for: modelFileName) {
             $0.downloadedBytes = downloadedBytes
             $0.totalBytes = totalBytes
+            $0.bytesPerSecond = bytesPerSecond
         }
     }
     
@@ -1231,18 +1237,22 @@ private struct HuggingFaceModelCardData: Decodable {
 private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate {
     private static let progressUpdateInterval = 1.0
     private static let progressUpdateByteInterval = 16 * 1024 * 1024
+    private static let speedUpdateInterval = 1.0
     
     private let destination: URL
     private let existingBytes: Int
-    private let progressHandler: @Sendable (Int, Int?) -> Void
+    private let progressHandler: @Sendable (Int, Int?, Double?) -> Void
     private var continuation: CheckedContinuation<Void, Error>?
     private var fileHandle: FileHandle?
     private var downloadedBytes = 0
     private var totalBytes: Int?
     private var lastProgressUpdate = Date.distantPast
     private var lastProgressBytes = 0
+    private var lastSpeedUpdate = Date.distantPast
+    private var lastSpeedBytes = 0
+    private var currentBytesPerSecond: Double?
     
-    init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?) -> Void) {
+    init(destination: URL, existingBytes: Int, progressHandler: @escaping @Sendable (Int, Int?, Double?) -> Void) {
         self.destination = destination
         self.existingBytes = existingBytes
         self.progressHandler = progressHandler
@@ -1278,6 +1288,9 @@ private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate 
             
             fileHandle = handle
             downloadedBytes = effectiveExistingBytes
+            lastSpeedUpdate = Date()
+            lastSpeedBytes = downloadedBytes
+            currentBytesPerSecond = nil
             
             if response.expectedContentLength > 0 {
                 totalBytes = effectiveExistingBytes + Int(response.expectedContentLength)
@@ -1334,9 +1347,29 @@ private final class ModelDataDownloadDelegate: NSObject, URLSessionDataDelegate 
         
         guard force || hasEnoughBytes || hasEnoughTime else { return }
         
+        let bytesPerSecond = downloadSpeed(at: now)
         lastProgressUpdate = now
         lastProgressBytes = downloadedBytes
-        progressHandler(downloadedBytes, totalBytes)
+        progressHandler(downloadedBytes, totalBytes, bytesPerSecond)
+    }
+    
+    private func downloadSpeed(at date: Date) -> Double? {
+        let elapsedTime = date.timeIntervalSince(lastSpeedUpdate)
+        guard elapsedTime >= Self.speedUpdateInterval else { return currentBytesPerSecond }
+        
+        let downloadedByteCount = downloadedBytes - lastSpeedBytes
+        guard downloadedByteCount > 0 else {
+            lastSpeedUpdate = date
+            lastSpeedBytes = downloadedBytes
+            currentBytesPerSecond = nil
+            return nil
+        }
+        
+        let bytesPerSecond = Double(downloadedByteCount) / elapsedTime
+        lastSpeedUpdate = date
+        lastSpeedBytes = downloadedBytes
+        currentBytesPerSecond = bytesPerSecond
+        return bytesPerSecond
     }
 }
 
