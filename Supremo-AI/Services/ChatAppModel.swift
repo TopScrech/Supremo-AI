@@ -1086,6 +1086,7 @@ private struct HuggingFaceModelCardData: Decodable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         baseModel = try container.decodeIfPresent(String.self, forKey: .baseModel)
         modelName = try container.decodeIfPresent(String.self, forKey: .modelName)
