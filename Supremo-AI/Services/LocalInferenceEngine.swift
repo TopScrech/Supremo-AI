@@ -116,7 +116,7 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
             temperature: Float(chat.settings.sampling.temperature),
             batchSize: chat.settings.prediction.batchSize,
             useMetal: false,
-            maxTokenCount: chat.settings.prediction.maxTokens,
+            maxTokenCount: chat.settings.prediction.maxOutputTokens,
             stopTokens: swiftLlamaStopTokens(for: chat)
         )
     }
