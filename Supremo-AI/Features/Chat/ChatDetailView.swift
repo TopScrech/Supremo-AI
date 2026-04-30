@@ -60,19 +60,16 @@ struct ChatDetailView: View {
             }
             
             if !chat.messages.isEmpty && !appModel.canRunChat(chat) {
-                HStack {
-                    Button("Select Model", systemImage: "shippingbox", action: selectModel)
-#if !os(visionOS)
-                        .buttonStyle(.glass)
-#endif
-                    
-                    Button("Install Model", systemImage: "arrow.down.circle") {
+                ChatUnavailableActionsView(
+                    isModelReady: appModel.isModelReady(for: chat),
+                    isInferenceBackendAvailable: appModel.isInferenceBackendAvailable,
+                    initializationState: appModel.modelInitializationState(for: chat),
+                    selectModelAction: selectModel,
+                    installModelAction: {
                         showModelInstall = true
-                    }
-#if !os(visionOS)
-                    .buttonStyle(.glassProminent)
-#endif
-                }
+                    },
+                    initializeAction: initializeModel
+                )
             }
             
             ChatComposer(prompt: $prompt, isResponding: $appModel.isGenerating, isFocused: $isComposerFocused, sendPrompt: sendPrompt, stopAction: stopAction)
