@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/TopScrech/Chit-Chat",
       "state" : {
-        "revision" : "433436934e92ebc5e668adf39949493f18af55df",
-        "version" : "1.0.2"
+        "revision" : "3364222fe76b967e541c688101e93efbf7c989d8",
+        "version" : "1.0.3"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/TopScrech/ScrechKit",
       "state" : {
-        "revision" : "a9ec3560ca613c10fa6f7aae2ab73a1c1a1ac3bb",
-        "version" : "1.0.3"
+        "revision" : "b042653a85530e387eb5036a49983918d6511276",
+        "version" : "1.0.4"
       }
     }
   ],
