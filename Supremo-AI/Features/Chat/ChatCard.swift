@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct ChatRowView: View {
+struct ChatCard: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let chat: ChatConfiguration
@@ -25,6 +25,7 @@ struct ChatRowView: View {
                 .caption()
                 .foregroundStyle(.tertiary)
         }
+        .foregroundStyle(.foreground)
         .alert("Rename Chat", isPresented: $isRenamePresented) {
             TextField("Name", text: $renameTitle)
             Button("Cancel", role: .cancel, action: resetRename)

@@ -1,6 +1,6 @@
 import Foundation
 
-enum ChatRole: String, Codable, CaseIterable, Identifiable {
+enum ChatRole: String, Identifiable, Codable, CaseIterable {
     case user, assistant, system, rag
     
     var id: String { rawValue }

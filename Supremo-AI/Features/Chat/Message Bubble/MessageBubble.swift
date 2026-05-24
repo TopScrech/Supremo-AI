@@ -1,6 +1,6 @@
 import ScrechKit
 
-struct MessageBubbleView: View {
+struct MessageBubble: View {
     @AppStorage(AppStorageKey.devMode) private var devMode = false
     
     let message: ChatMessage
@@ -15,11 +15,13 @@ struct MessageBubbleView: View {
             
             VStack(alignment: bubbleAlignment) {
                 VStack(alignment: .leading) {
-                    Text(message.role.label)
-                        .caption()
-                        .secondary()
+                    if message.role != .user {
+                        Text(message.role.label)
+                            .caption()
+                            .secondary()
+                    }
                     
-                    MessageContentView(message: message, style: style)
+                    MessageContent(message: message, style: style)
                 }
                 .padding()
                 .background(backgroundStyle)
@@ -42,8 +44,8 @@ struct MessageBubbleView: View {
     
     @ViewBuilder
     private var tokenCountLabel: some View {
-        if showTokenCount {
-            MessageMetricsView(message: message)
+        if showTokenCount, message.role == .user {
+            MessageMetrics(message)
         }
     }
     

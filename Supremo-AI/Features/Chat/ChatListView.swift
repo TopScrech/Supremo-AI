@@ -10,7 +10,7 @@ struct ChatListView: View {
         
         List(selection: $appModel.selectedChatID) {
             ForEach(appModel.filteredChats) {
-                ChatRowView($0)
+                ChatCard($0)
                     .tag($0.id)
             }
             .onDelete(perform: appModel.deleteChats)
