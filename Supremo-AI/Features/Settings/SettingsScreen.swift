@@ -17,7 +17,7 @@ enum SettingsScreen: String, CaseIterable, Identifiable {
     
     var systemImage: String {
         switch self {
-        case .general: "gearshape"
+        case .general: "gear"
         case .models: "shippingbox"
         case .downloads: "arrow.down.circle"
         case .shortcuts: "sparkles"

@@ -5,10 +5,16 @@ struct ChatListView: View {
     
     @Binding var showSettings: Bool
     
+    private let url = URL(string: "https://fancontrol.dev?source=supremo-ai")!
+    
     var body: some View {
         @Bindable var appModel = appModel
         
         List(selection: $appModel.selectedChatID) {
+            Section {
+                AdView("FanControl", subtitle: "Keep Your Mac Cool and Quiet", url: url)
+            }
+            
             ForEach(appModel.filteredChats) {
                 ChatCard($0)
                     .tag($0.id)
@@ -16,6 +22,7 @@ struct ChatListView: View {
             .onDelete(perform: appModel.deleteChats)
         }
         .navigationTitle("Chats")
+        .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem {
                 Button("Settings", systemImage: "gear") {
