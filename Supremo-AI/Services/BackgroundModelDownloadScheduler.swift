@@ -58,12 +58,16 @@ final class BackgroundModelDownloadScheduler {
     
     @available(iOS 26, *)
     private func submitContinuedProcessingTask(taskID: String, title: String, subtitle: String) {
-        let request = BGContinuedProcessingTaskRequest(identifier: taskID, title: title, subtitle: subtitle)
+        let logger = logger
         
-        do {
-            try BGTaskScheduler.shared.submit(request)
-        } catch {
-            logger.error("Failed to submit model download continued processing task: \(error.localizedDescription, privacy: .public)")
+        Task.detached {
+            let request = BGContinuedProcessingTaskRequest(identifier: taskID, title: title, subtitle: subtitle)
+            
+            do {
+                try await BGTaskScheduler.shared.submitTaskRequest(request)
+            } catch {
+                logger.error("Failed to submit model download continued processing task: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 }
