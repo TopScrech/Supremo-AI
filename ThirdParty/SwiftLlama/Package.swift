@@ -20,7 +20,7 @@ let package = Package(
             name: "llama",
             path: "../llama/llama.xcframework"
         ),
-        .target(name: "SwiftLlama", 
+        .target(name: "SwiftLlama",
                 dependencies: [
                     "llama"
                 ]),
