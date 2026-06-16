@@ -14,4 +14,9 @@ struct ModelFile: Identifiable, Codable, Equatable {
     var isPartialDownload: Bool?
     
     var isAvailableLocally: Bool { localURL != nil && isPartialDownload != true }
+    var isRunnableChatModel: Bool { isAvailableLocally && !isMultimodalProjector }
+    
+    static func isMultimodalProjectorFileName(_ fileName: String) -> Bool {
+        fileName.localizedStandardContains("mmproj")
+    }
 }

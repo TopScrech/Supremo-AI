@@ -63,7 +63,7 @@ struct ModelFileCard: View {
             
             Spacer()
             
-            if model.isAvailableLocally {
+            if model.isRunnableChatModel {
                 if let chat = appModel.selectedChat {
                     Button("Select") {
                         Task {

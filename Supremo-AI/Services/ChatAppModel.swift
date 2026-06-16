@@ -155,7 +155,7 @@ final class ChatAppModel {
             try store.ensureDirectories()
             chats = (try? store.load([ChatConfiguration].self, from: "chats.json")) ?? [ChatConfiguration.sample]
             finishPersistedTypingAnimations()
-            modelFiles = (try? store.load([ModelFile].self, from: "models.json")) ?? []
+            modelFiles = ((try? store.load([ModelFile].self, from: "models.json")) ?? []).map(normalizedModelFile)
             refreshModelFilesFromDisk()
             selectedChatID = chats.first?.id
             try save()
@@ -172,7 +172,7 @@ final class ChatAppModel {
     }
     
     func createChat() {
-        let fallbackModel = modelFiles.first { $0.isAvailableLocally }
+        let fallbackModel = modelFiles.first { $0.isRunnableChatModel }
         let chat = ChatConfiguration(title: "New Chat", modelName: fallbackModel?.displayName ?? "No model selected", modelFileID: fallbackModel?.id)
         chats.insert(chat, at: 0)
         selectedChatID = chat.id
@@ -229,7 +229,7 @@ final class ChatAppModel {
     
     func isModelReady(for chat: ChatConfiguration) -> Bool {
         guard let modelFileID = chat.modelFileID else { return false }
-        return modelFiles.contains { $0.id == modelFileID && $0.isAvailableLocally }
+        return modelFiles.contains { $0.id == modelFileID && $0.isRunnableChatModel }
     }
     
     func canRunChat(_ chat: ChatConfiguration) -> Bool {
@@ -294,7 +294,7 @@ final class ChatAppModel {
     private func runTestAllModels() async {
         guard !isTestingAllModels else { return }
         
-        let models = modelFiles.filter { $0.isAvailableLocally && !$0.isMultimodalProjector }
+        let models = modelFiles.filter(\.isRunnableChatModel)
         guard let firstModel = models.first else {
             testAllModelsStatus = "No local models available"
             testAllModelsTask = nil
@@ -350,8 +350,8 @@ final class ChatAppModel {
     }
     
     func assignModel(_ model: ModelFile, to chat: ChatConfiguration) async {
-        guard model.isAvailableLocally else {
-            logger.info("Finish downloading \(model.fileName, privacy: .public) before using it")
+        guard model.isRunnableChatModel else {
+            logger.info("\(model.fileName, privacy: .public) cannot be selected as a chat model")
             return
         }
         
@@ -372,7 +372,7 @@ final class ChatAppModel {
         
         modelFiles.removeAll { $0.id == model.id }
         for index in chats.indices where chats[index].modelFileID == model.id {
-            let fallbackModel = modelFiles.first { $0.isAvailableLocally }
+            let fallbackModel = modelFiles.first { $0.isRunnableChatModel }
             chats[index].modelFileID = fallbackModel?.id
             chats[index].modelName = fallbackModel?.displayName ?? "No model selected"
             chats[index].updatedAt = Date()
@@ -710,7 +710,7 @@ final class ChatAppModel {
             }
             try FileManager.default.copyItem(at: url, to: destination)
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
-            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama)
+            let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama, isMultimodalProjector: ModelFile.isMultimodalProjectorFileName(url.lastPathComponent))
             modelFiles.append(model)
             logger.info("Imported \(model.fileName, privacy: .public)")
             persistStatus()
@@ -729,7 +729,8 @@ final class ChatAppModel {
             remoteURL: downloadableModel.url,
             quantization: downloadableModel.quantization,
             family: metadata?.inferenceKind ?? downloadableModel.inference,
-            promptTemplate: metadata?.cardData?.promptTemplate
+            promptTemplate: metadata?.cardData?.promptTemplate,
+            isMultimodalProjector: ModelFile.isMultimodalProjectorFileName(downloadableModel.fileName)
         )
         
         modelFiles.append(model)
@@ -739,6 +740,15 @@ final class ChatAppModel {
     }
     
     func download(_ model: DownloadableModel) async {
+        guard !model.isMultimodalProjector else {
+            logger.info("\(model.fileName, privacy: .public) is a projector-only file and cannot be downloaded")
+            setDownloadState(
+                DownloadState(downloadedBytes: 0, totalBytes: model.sizeBytes, isDownloading: false, errorMessage: "Projector-only files cannot be downloaded"),
+                for: model.fileName
+            )
+            return
+        }
+        
 #if os(iOS)
         if #available(iOS 26, *) {
             startContinuedProcessingDownload(model)
@@ -1094,8 +1104,19 @@ final class ChatAppModel {
             remoteURL: catalogModel?.downloadURL(for: completeFileName),
             quantization: isPartialDownload ? "Partial" : ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
+            isMultimodalProjector: ModelFile.isMultimodalProjectorFileName(completeFileName),
             isPartialDownload: isPartialDownload
         )
+    }
+    
+    private func normalizedModelFile(_ model: ModelFile) -> ModelFile {
+        guard ModelFile.isMultimodalProjectorFileName(model.fileName), !model.isMultimodalProjector else {
+            return model
+        }
+        
+        var normalizedModel = model
+        normalizedModel.isMultimodalProjector = true
+        return normalizedModel
     }
     
     private func catalogModel(for fileName: String) -> DownloadableModel? {

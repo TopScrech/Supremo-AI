@@ -8,7 +8,7 @@ struct ChatModelPicker: View {
     
     private var localModels: [ModelFile] {
         appModel.modelFiles
-            .filter { $0.isAvailableLocally && !$0.isMultimodalProjector }
+            .filter(\.isRunnableChatModel)
             .sorted {
                 $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
             }
