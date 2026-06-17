@@ -53,6 +53,10 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
         huggingFaceModelCardURL != nil && versionPrefix != nil
     }
     
+    var isMultimodalProjector: Bool {
+        ModelFile.isMultimodalProjectorFileName(fileName)
+    }
+    
     var versionSelectionID: String {
         if supportsVersionSelection, let huggingFaceModelCardURL {
             huggingFaceModelCardURL.absoluteString
@@ -63,6 +67,7 @@ struct DownloadableModel: Identifiable, Codable, Equatable {
     
     func matchesVersionFileName(_ fileName: String) -> Bool {
         guard fileName.hasSuffix(".gguf") else { return false }
+        guard !ModelFile.isMultimodalProjectorFileName(fileName) else { return false }
         guard let versionPrefix else { return self.fileName == fileName }
         
         return normalizedVersionFileName(fileName).hasPrefix(normalizedVersionFileName(versionPrefix))

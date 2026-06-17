@@ -19,17 +19,14 @@ struct ChatDetailView: View {
         
         VStack {
             if !chat.messages.isEmpty {
-                ChatTranscriptView(chat)
+                ChatTranscriptView(chat, isComposerFocused: isComposerFocused)
             } else if !appModel.isModelReady(for: chat) {
-                MissingModelView(
-                    chat: chat,
-                    installAction: {
-                        showModelInstall = true
-                    }, editAction: {
-                        selectedSettingsScreen = .models
-                        showAppSettings = true
-                    }
-                )
+                MissingModelView(chat: chat) {
+                    showModelInstall = true
+                } editAction: {
+                    selectedSettingsScreen = .models
+                    showAppSettings = true
+                }
             } else if !appModel.isInferenceBackendAvailable {
                 MissingInferenceBackend(chat) {
                     showModelInstall = true
@@ -45,7 +42,7 @@ struct ChatDetailView: View {
                     showSettings = true
                 }
             } else {
-                ChatTranscriptView(chat)
+                ChatTranscriptView(chat, isComposerFocused: isComposerFocused)
             }
             
             let stopAction = appModel.isGenerating ? appModel.stopGenerating : nil

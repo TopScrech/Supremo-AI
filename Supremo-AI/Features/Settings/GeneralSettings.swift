@@ -34,7 +34,7 @@ struct GeneralSettings: View {
                             dismiss()
                             appModel.testAllModels()
                         }
-                        .disabled(appModel.modelFiles.allSatisfy { !$0.isAvailableLocally || $0.isMultimodalProjector })
+                        .disabled(appModel.modelFiles.allSatisfy { !$0.isRunnableChatModel })
                     }
                 }
                 .foregroundStyle(.foreground)

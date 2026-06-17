@@ -62,20 +62,20 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
     private func swiftLlamaResponse(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> String {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
-        logger.info("Starting SwiftLlama response. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        logger.info("Starting SwiftLlama response. promptCharacters=\(formattedPrompt.count) batchSize=\(configuration.batchSize) context=\(configuration.nCTX) maxTokens=\(configuration.maxTokenCount)")
         let rawOutput = try await Self.swiftLlamaStore.response(
             modelPath: modelURL.path(),
             configuration: configuration,
             prompt: formattedPrompt
         )
-        logger.info("Finished SwiftLlama response. outputCharacters=\(rawOutput.count, privacy: .public)")
+        logger.info("Finished SwiftLlama response. outputCharacters=\(rawOutput.count)")
         return cleanedSwiftLlamaOutput(rawOutput)
     }
     
     private func swiftLlamaResponseStream(for prompt: String, chat: ChatConfiguration, modelURL: URL) async throws -> AsyncThrowingStream<String, Error> {
         let configuration = swiftLlamaConfiguration(for: chat)
         let formattedPrompt = formattedSwiftLlamaPrompt(prompt, chat: chat)
-        logger.info("Starting SwiftLlama response stream. promptCharacters=\(formattedPrompt.count, privacy: .public) batchSize=\(configuration.batchSize, privacy: .public) context=\(configuration.nCTX, privacy: .public) maxTokens=\(configuration.maxTokenCount, privacy: .public)")
+        logger.info("Starting SwiftLlama response stream. promptCharacters=\(formattedPrompt.count) batchSize=\(configuration.batchSize) context=\(configuration.nCTX) maxTokens=\(configuration.maxTokenCount)")
         let rawStream = try await Self.swiftLlamaStore.responseStream(
             modelPath: modelURL.path(),
             configuration: configuration,
@@ -91,10 +91,10 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
                         rawOutput += delta
                         continuation.yield(cleanedSwiftLlamaOutput(rawOutput))
                     }
-                    logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
+                    logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count)")
                     continuation.finish()
                 } catch is CancellationError {
-                    logger.info("Cancelled SwiftLlama response stream. outputCharacters=\(rawOutput.count, privacy: .public)")
+                    logger.info("Cancelled SwiftLlama response stream. outputCharacters=\(rawOutput.count)")
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

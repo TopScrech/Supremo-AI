@@ -5,23 +5,23 @@ struct ShortcutModelLibrary {
 
     func localModels() throws -> [ModelFile] {
         try store.ensureDirectories()
-        var modelFiles = (try? store.load([ModelFile].self, from: "models.json")) ?? []
+        var modelFiles = ((try? store.load([ModelFile].self, from: "models.json")) ?? []).map(normalizedModel)
         refreshModelFilesFromDisk(&modelFiles)
-        return modelFiles.filter { $0.isAvailableLocally }
+        return modelFiles.filter(\.isRunnableChatModel)
     }
 
     func selectedModel(for chat: ChatConfiguration, preferredModelID: UUID?, in modelFiles: [ModelFile]) -> ModelFile? {
         if let preferredModelID,
-           let preferredModel = modelFiles.first(where: { $0.id == preferredModelID && $0.isAvailableLocally }) {
+           let preferredModel = modelFiles.first(where: { $0.id == preferredModelID && $0.isRunnableChatModel }) {
             return preferredModel
         }
 
         if let modelFileID = chat.modelFileID,
-           let selectedModel = modelFiles.first(where: { $0.id == modelFileID && $0.isAvailableLocally }) {
+           let selectedModel = modelFiles.first(where: { $0.id == modelFileID && $0.isRunnableChatModel }) {
             return selectedModel
         }
 
-        return modelFiles.first { $0.isAvailableLocally }
+        return modelFiles.first { $0.isRunnableChatModel }
     }
 
     private func refreshModelFilesFromDisk(_ modelFiles: inout [ModelFile]) {
@@ -60,8 +60,19 @@ struct ShortcutModelLibrary {
             remoteURL: catalogModel?.downloadURL(for: completeFileName),
             quantization: isPartialDownload ? "Partial" : ModelQuantization.value(from: completeFileName, fallback: "Local"),
             family: catalogModel?.inference ?? inferredInferenceKind(from: completeFileName),
+            isMultimodalProjector: ModelFile.isMultimodalProjectorFileName(completeFileName),
             isPartialDownload: isPartialDownload
         )
+    }
+    
+    private func normalizedModel(_ model: ModelFile) -> ModelFile {
+        guard ModelFile.isMultimodalProjectorFileName(model.fileName), !model.isMultimodalProjector else {
+            return model
+        }
+        
+        var normalizedModel = model
+        normalizedModel.isMultimodalProjector = true
+        return normalizedModel
     }
     
     private func catalogModel(for fileName: String) -> DownloadableModel? {

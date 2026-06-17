@@ -4,9 +4,11 @@ struct ChatTranscriptView: View {
     @Environment(ChatAppModel.self) private var appModel
     
     private let chat: ChatConfiguration
+    private let isComposerFocused: Bool
     
-    init(_ chat: ChatConfiguration) {
+    init(_ chat: ChatConfiguration, isComposerFocused: Bool) {
         self.chat = chat
+        self.isComposerFocused = isComposerFocused
     }
     
     var body: some View {
@@ -33,6 +35,25 @@ struct ChatTranscriptView: View {
                         proxy.scrollTo(lastMessage.id, anchor: .bottom)
                     }
                 }
+                .onChange(of: isComposerFocused) {
+                    scrollToBottomAfterLayout(proxy)
+                }
+            }
+        }
+    }
+    
+    private func scrollToBottomAfterLayout(_ proxy: ScrollViewProxy) {
+        guard isComposerFocused, let lastMessage = chat.messages.last else { return }
+        
+        Task {
+            await Task.yield()
+            withAnimation {
+                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+            }
+            
+            try? await Task.sleep(for: .milliseconds(250))
+            withAnimation {
+                proxy.scrollTo(lastMessage.id, anchor: .bottom)
             }
         }
     }

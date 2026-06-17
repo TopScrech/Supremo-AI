@@ -30,7 +30,7 @@ class LlamaModel {
             model_params.n_gpu_layers = 0
         #endif
 
-        guard let model = llama_load_model_from_file(path, model_params) else {
+        guard let model = llama_model_load_from_file(path, model_params) else {
             throw SwiftLlamaError.others("Cannot load model at path \(path)")
         }
         self.model = model
@@ -39,7 +39,7 @@ class LlamaModel {
         }
         self.vocab = vocab
 
-        guard let context = llama_new_context_with_model(model, configuration.contextParameters) else {
+        guard let context = llama_init_from_model(model, configuration.contextParameters) else {
             throw SwiftLlamaError.others("Cannot load model context")
         }
         self.context = context
@@ -58,7 +58,7 @@ class LlamaModel {
 
     private func checkContextLength(context: Context, model: Model) throws {
         let n_ctx = llama_n_ctx(context)
-        let n_ctx_train = llama_n_ctx_train(model)
+        let n_ctx_train = llama_model_n_ctx_train(model)
         if n_ctx > n_ctx_train {
             throw SwiftLlamaError.others("Model was trained on \(n_ctx_train) context but tokens \(n_ctx) specified")
         }
@@ -193,6 +193,6 @@ class LlamaModel {
         llama_batch_free(batch)
         llama_sampler_free(sampler)
         llama_free(context)
-        llama_free_model(model)
+        llama_model_free(model)
     }
 }
