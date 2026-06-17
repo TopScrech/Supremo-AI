@@ -116,7 +116,7 @@ final class ChatAppModel {
             let tags = metadata.tags + (metadata.cardData?.tags ?? [])
             return tags.contains("not-for-all-audiences")
         } catch {
-            logger.error("Unable to fetch metadata for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            logger.error("Unable to fetch metadata for \(model.fileName): \(error.localizedDescription)")
             return false
         }
     }
@@ -160,7 +160,7 @@ final class ChatAppModel {
             selectedChatID = chats.first?.id
             try save()
         } catch {
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
             chats = [ChatConfiguration.sample]
             selectedChatID = chats.first?.id
         }
@@ -258,11 +258,11 @@ final class ChatAppModel {
             try await inferenceEngine.prepare(chat: initializationChat)
             modelInitializationStates[chat.id] = .ready
             modelInitializationMessages[chat.id] = nil
-            logger.info("Initialized model \(initializationChat.modelName, privacy: .public)")
+            logger.info("Initialized model \(initializationChat.modelName)")
         } catch {
             modelInitializationStates[chat.id] = .failed
             modelInitializationMessages[chat.id] = error.localizedDescription
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
         }
     }
     
@@ -272,7 +272,7 @@ final class ChatAppModel {
         await inferenceEngine.eject(chat: ejectionChat)
         modelInitializationStates[chat.id] = .idle
         modelInitializationMessages[chat.id] = nil
-        logger.info("Ejected model \(chat.modelName, privacy: .public)")
+        logger.info("Ejected model \(chat.modelName)")
     }
     
     func testAllModels() {
@@ -332,7 +332,7 @@ final class ChatAppModel {
             }
             
             guard isModelInitialized(for: assignedChat) else {
-                logger.error("Skipping \(model.displayName, privacy: .public) because model initialization failed")
+                logger.error("Skipping \(model.displayName) because model initialization failed")
                 await ejectModel(for: assignedChat)
                 continue
             }
@@ -351,7 +351,7 @@ final class ChatAppModel {
     
     func assignModel(_ model: ModelFile, to chat: ChatConfiguration) async {
         guard model.isRunnableChatModel else {
-            logger.info("\(model.fileName, privacy: .public) cannot be selected as a chat model")
+            logger.info("\(model.fileName) cannot be selected as a chat model")
             return
         }
         
@@ -378,7 +378,7 @@ final class ChatAppModel {
             chats[index].updatedAt = Date()
         }
         
-        logger.info("Deleted \(model.fileName, privacy: .public)")
+        logger.info("Deleted \(model.fileName)")
         refreshDownloadCapacityErrorMessages()
         persistStatus()
     }
@@ -464,7 +464,7 @@ final class ChatAppModel {
             return
         }
         guard isInferenceBackendAvailable else {
-            logger.error("\(InferenceEngineError.backendUnavailable.localizedDescription, privacy: .public)")
+            logger.error("\(InferenceEngineError.backendUnavailable.localizedDescription)")
             return
         }
         
@@ -517,7 +517,7 @@ final class ChatAppModel {
         } catch {
             completeMessageGeneration(assistantMessageID, in: chatSnapshot.id)
             updateLatestAssistantMessage(in: chatSnapshot.id, fallbackText: error.localizedDescription)
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
         }
     }
     
@@ -712,10 +712,10 @@ final class ChatAppModel {
             modelFiles.removeAll { $0.fileName == url.lastPathComponent || $0.fileName == "\(url.lastPathComponent).download" }
             let model = ModelFile(displayName: url.deletingPathExtension().lastPathComponent, fileName: url.lastPathComponent, localURL: destination, remoteURL: nil, quantization: ModelQuantization.value(from: url.lastPathComponent, fallback: "Local"), family: .llama, isMultimodalProjector: ModelFile.isMultimodalProjectorFileName(url.lastPathComponent))
             modelFiles.append(model)
-            logger.info("Imported \(model.fileName, privacy: .public)")
+            logger.info("Imported \(model.fileName)")
             persistStatus()
         } catch {
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
         }
     }
     
@@ -734,14 +734,14 @@ final class ChatAppModel {
         )
         
         modelFiles.append(model)
-        logger.info("Added \(downloadableModel.fileName, privacy: .public)")
+        logger.info("Added \(downloadableModel.fileName)")
         refreshDownloadCapacityErrorMessages()
         persistStatus()
     }
     
     func download(_ model: DownloadableModel) async {
         guard !model.isMultimodalProjector else {
-            logger.info("\(model.fileName, privacy: .public) is a projector-only file and cannot be downloaded")
+            logger.info("\(model.fileName) is a projector-only file and cannot be downloaded")
             setDownloadState(
                 DownloadState(downloadedBytes: 0, totalBytes: model.sizeBytes, isDownloading: false, errorMessage: "Projector-only files cannot be downloaded"),
                 for: model.fileName
@@ -778,7 +778,7 @@ final class ChatAppModel {
         let partialDestination = store.modelsURL.appending(path: "\(currentModel.fileName).download")
         
         do {
-            logger.info("Downloading \(currentModel.fileName, privacy: .public)")
+            logger.info("Downloading \(currentModel.fileName)")
             try store.ensureDirectories()
             let existingBytes = fileSize(for: partialDestination)
             updateDownloadCapacityErrorMessage(for: currentModel)
@@ -814,7 +814,7 @@ final class ChatAppModel {
                 DownloadState(downloadedBytes: fileSize(for: partialDestination), totalBytes: currentModel.sizeBytes, isDownloading: false, errorMessage: error.localizedDescription),
                 for: currentModel.fileName
             )
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
             return false
         }
     }
@@ -929,7 +929,7 @@ final class ChatAppModel {
             downloadableModels[index].sizeBytes = sizeBytes
             updateDownloadCapacityErrorMessage(for: downloadableModels[index])
         } catch {
-            logger.error("Unable to fetch size for \(model.fileName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            logger.error("Unable to fetch size for \(model.fileName): \(error.localizedDescription)")
         }
     }
     
@@ -1150,7 +1150,7 @@ final class ChatAppModel {
         do {
             try save()
         } catch {
-            logger.error("\(error.localizedDescription, privacy: .public)")
+            logger.error("\(error.localizedDescription)")
         }
     }
 }
