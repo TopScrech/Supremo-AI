@@ -64,7 +64,7 @@ final class BackgroundModelDownloadScheduler {
             let request = BGContinuedProcessingTaskRequest(identifier: taskID, title: title, subtitle: subtitle)
             
             do {
-                try await BGTaskScheduler.shared.submit(request)
+                try await BGTaskScheduler.shared.submitTaskRequest(request)
             } catch {
                 logger.error("Failed to submit model download continued processing task: \(error.localizedDescription)")
             }
