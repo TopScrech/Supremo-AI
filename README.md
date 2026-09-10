@@ -2,9 +2,9 @@
 Local AI chat app
 
 ## Supported platforms
-- iOS / iPadOS 26+
-- macOS 26+
-- visionOS 26+
+- iOS / iPadOS 27+
+- macOS 27+
+- visionOS 27+
 
 ## Supported models
 llama, gemma, phi, gpt2, starcoder, falcon, mpt, bloom, stableLM, qwen, yi, deepseek, mixtral, plamo, mamba, rwkv, gptNeoX, llava, moondream

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 100;
+	objectVersion = 110;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -111,7 +111,7 @@
 				F3AA50BA2F9BD04C00BCE00A /* XCRemoteSwiftPackageReference "ScrechKit" */,
 				F3AA60012FA0000000BCE00A /* XCLocalSwiftPackageReference "ThirdParty/SwiftLlama" */,
 			);
-			preferredProjectObjectVersion = 100;
+			preferredProjectObjectVersion = 110;
 			productRefGroup = F3AA4F252F9BCECF00BCE00A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -300,7 +300,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27;
-				MARKETING_VERSION = 2.1.3;
+				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.Supremo-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -359,7 +359,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27;
-				MARKETING_VERSION = 2.1.3;
+				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "dev.topscrech.Supremo-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
