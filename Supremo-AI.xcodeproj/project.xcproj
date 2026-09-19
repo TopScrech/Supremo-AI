@@ -30,6 +30,7 @@
   ],
   "files": [
     { "path": "README.md" },
+    { "path": "AGENTS.md" },
     { "kind": "folder", "path": "Supremo-AI", "target-membership": [ "Supremo-AI" ] },
     { "path": "LICENSE.txt" },
     {
