@@ -85,12 +85,14 @@ struct SwiftLlamaInferenceEngine: LocalInferenceEngine {
         return AsyncThrowingStream { continuation in
             let task = Task {
                 var rawOutput = ""
+                
                 do {
                     for try await delta in rawStream {
                         try Task.checkCancellation()
                         rawOutput += delta
                         continuation.yield(cleanedSwiftLlamaOutput(rawOutput))
                     }
+                    
                     logger.info("Finished SwiftLlama response stream. outputCharacters=\(rawOutput.count)")
                     continuation.finish()
                 } catch is CancellationError {

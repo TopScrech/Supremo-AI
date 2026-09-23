@@ -845,6 +845,7 @@ final class ChatAppModel {
                 )
             }
         }
+        
         let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
         defer {
             session.invalidateAndCancel()

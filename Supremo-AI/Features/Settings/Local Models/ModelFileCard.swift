@@ -65,11 +65,9 @@ struct ModelFileCard: View {
             
             if model.isRunnableChatModel {
                 if let chat = appModel.selectedChat {
-                    Button("Select") {
-                        Task {
-                            await appModel.assignModel(model, to: chat)
-                            dismiss()
-                        }
+                    AsyncButton("Select") {
+                        await appModel.assignModel(model, to: chat)
+                        dismiss()
                     }
 #if !os(visionOS)
                     .buttonStyle(.glass)
@@ -77,11 +75,13 @@ struct ModelFileCard: View {
                     .foregroundStyle(.foreground)
                 }
             } else if model.isPartialDownload == true, downloadState?.isDownloading != true {
-                Button("Continue Download", action: continueDownload)
+                AsyncButton("Continue Download") {
+                    await appModel.continueDownload(model)
+                }
 #if !os(visionOS)
-                    .buttonStyle(.glassProminent)
+                .buttonStyle(.glassProminent)
 #endif
-                    .padding(.top, 5)
+                .padding(.top, 5)
             }
         }
         .swipeActions {
@@ -94,12 +94,6 @@ struct ModelFileCard: View {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 appModel.deleteModel(model)
             }
-        }
-    }
-    
-    private func continueDownload() {
-        Task {
-            await appModel.continueDownload(model)
         }
     }
 }
