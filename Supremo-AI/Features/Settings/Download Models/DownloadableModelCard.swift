@@ -71,12 +71,14 @@ struct DownloadableModelCard: View {
                     .buttonBorderShape(.circle)
                 
             } else if downloadState?.isDownloading != true {
-                SFButton("arrow.down") {
+                AsyncButton {
                     if model.supportsVersionSelection {
                         versionSelectionModel = model
                     } else {
-                        prepareDownload()
+                        await prepareDownload()
                     }
+                } label: {
+                    Image(systemName: "arrow.down")
                 }
                 .disabled((capacityErrorMessage != nil && !model.supportsVersionSelection) || isCheckingNotForAllAudiences)
 #if !os(visionOS)
@@ -87,7 +89,9 @@ struct DownloadableModelCard: View {
         }
         .contentShape(.rect)
         .contextMenu {
-            Button("Copy download link", systemImage: "link", action: copyDownloadLink)
+            Button("Copy download link", systemImage: "link") {
+                copy(model.url.absoluteString)
+            }
             
             if model.huggingFaceModelCardURL != nil {
                 Button("Copy model card link", systemImage: "link", action: copyHuggingFaceModelCardLink)
@@ -95,7 +99,7 @@ struct DownloadableModelCard: View {
         }
         .alert("Not for all audiences", isPresented: $isNotForAllAudiencesAlertPresented) {
             Button("Cancel", role: .cancel) {}
-            Button("Download", action: startDownload)
+            AsyncButton("Download", action: startDownload)
         } message: {
             Text("This repository has been marked as containing sensitive content and may contain potentially harmful and sensitive information")
         }
@@ -106,30 +110,22 @@ struct DownloadableModelCard: View {
         }
     }
     
-    private func prepareDownload() {
+    private func prepareDownload() async {
         guard !isCheckingNotForAllAudiences else { return }
         
         isCheckingNotForAllAudiences = true
         
-        Task {
-            if await appModel.isMarkedNotForAllAudiences(model) {
-                isNotForAllAudiencesAlertPresented = true
-            } else {
-                startDownload()
-            }
-            
-            isCheckingNotForAllAudiences = false
+        if await appModel.isMarkedNotForAllAudiences(model) {
+            isNotForAllAudiencesAlertPresented = true
+        } else {
+            await startDownload()
         }
+        
+        isCheckingNotForAllAudiences = false
     }
     
-    private func startDownload() {
-        Task {
-            await appModel.download(model)
-        }
-    }
-    
-    private func copyDownloadLink() {
-        copy(model.url.absoluteString)
+    private func startDownload() async {
+        await appModel.download(model)
     }
     
     private func copyHuggingFaceModelCardLink() {
