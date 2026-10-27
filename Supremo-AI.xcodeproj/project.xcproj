@@ -13,6 +13,13 @@
   "packages": [
     {
       "kind": "remote",
+      "repository": "https://github.com/SimplyDanny/SwiftLintPlugins",
+      "version": {
+        "up-to-next-major-version": "0.65.1",
+      },
+    },
+    {
+      "kind": "remote",
       "repository": "https://github.com/TopScrech/Chit-Chat",
       "version": {
         "up-to-next-major-version": "1.0.0",
@@ -29,6 +36,7 @@
     },
   ],
   "files": [
+    { "path": ".swiftlint.yml" },
     { "path": "README.md" },
     { "path": "AGENTS.md" },
     { "kind": "folder", "path": "Supremo-AI", "target-membership": [ "Supremo-AI" ] },
@@ -47,6 +55,9 @@
       "id": "F3AA4F232F9BCECF00BCE00A",
       "product": "Products/Supremo-AI.app",
       "product-type": "application",
+      "dependencies": [
+        { "kind": "package", "package": "SwiftLintPlugins", "product-name": "SwiftLintBuildToolPlugin", "product-type": "build-tool-plugin" },
+      ],
       "build-phases": [
         "compile-sources",
         "frameworks",
